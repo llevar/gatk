@@ -17,7 +17,7 @@ time_gatk() {
   echo "$GATK_ARGS,$NUM_EXECUTORS,$EXECUTOR_CORES,$EXECUTOR_MEMORY,$RC,$DURATION_MINS"
 }
 
-for num_exec in 16
+for num_exec in 64
 do
-  time_gatk "MarkDuplicatesSpark -I hdfs:///user/$USER/q4_spark_eval/WGS-G94982-NA12878.bam -O hdfs:///user/$USER/q4_spark_eval/out/markdups --METRICS_FILE /tmp/markdups-metrics" $num_exec 4 4g >> test_case_md_results.csv
+  time_gatk "MarkDuplicatesSpark -I hdfs:///user/$USER/q4_spark_eval/WGS-G94982-NA12878.bam -O hdfs:///user/$USER/q4_spark_eval/out/markdups --METRICS_FILE /tmp/markdups-metrics" $num_exec 1 4g >> test_case_md_results.csv
 done
