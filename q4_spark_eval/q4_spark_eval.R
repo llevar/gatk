@@ -16,7 +16,7 @@ test_case_2$Executor.cores <- as.factor(test_case_2$Executor.cores)
 png("/Users/tom/workspace/gatk/q4_spark_eval/test_case_2_time.png")
 qplot(Total.cores, Time..mins., data = test_case_2, geom = c("point", "line"), colour = Executor.cores,
       xlab = "Cores", ylab = "Time (mins)",
-      main = "Time to run count reads (test case 2) by total number of cores")
+      main = "Test Case #2: CountReadsSpark, no intervals, HDFS input")
 dev.off()
 
 speedup <- test_case_2 %>%
@@ -27,7 +27,7 @@ test_case_2$Speedup <- with(test_case_2, 4 * speedup / Time..mins.)
 png("/Users/tom/workspace/gatk/q4_spark_eval/test_case_2_speedup.png")
 qplot(Total.cores, Speedup, data = test_case_2, geom = c("point", "line"), colour = Executor.cores,
       xlab = "Cores", ylab = "Speedup",
-      main = "Count reads (test case 2) speedup by total number of cores")
+      main = "Test Case #2: CountReadsSpark, no intervals, HDFS input")
 dev.off()
 
 # Test Case #4: CountReadsSpark, with intervals, HDFS input
@@ -39,7 +39,7 @@ test_case_4$Executor.cores <- as.factor(test_case_4$Executor.cores)
 png("/Users/tom/workspace/gatk/q4_spark_eval/test_case_4_time.png")
 qplot(Total.cores, Time..mins., data = test_case_4, geom = c("point", "line"), colour = Executor.cores,
       xlab = "Cores", ylab = "Time (mins)",
-      main = "Time to run count reads with intervals (test case 4) by total number of cores")
+      main = "Test Case #4: CountReadsSpark, with intervals, HDFS input")
 dev.off()
 
 speedup <- test_case_4 %>%
@@ -50,6 +50,6 @@ test_case_4$Speedup <- with(test_case_4, 4 * speedup / Time..mins.)
 png("/Users/tom/workspace/gatk/q4_spark_eval/test_case_4_speedup.png")
 qplot(Total.cores, Speedup, data = test_case_4, geom = c("point", "line"), colour = Executor.cores,
       xlab = "Cores", ylab = "Speedup",
-      main = "Count reads with intervals (test case 4) speedup by total number of cores")
+      main = "Test Case #4: CountReadsSpark, with intervals, HDFS input")
 dev.off()
 
