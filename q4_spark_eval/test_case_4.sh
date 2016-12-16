@@ -9,7 +9,7 @@ time_gatk() {
   LOG=${COMMAND}_$(date +%Y%m%d_%H%M%S).log
   ./gatk-launch $GATK_ARGS \
     -- \
-    --sparkRunner SPARK --sparkMaster yarn-client \
+    --sparkRunner SPARK --sparkMaster yarn-client --sparkSubmitCommand spark2-submit \
     --num-executors $NUM_EXECUTORS --executor-cores $EXECUTOR_CORES --executor-memory $EXECUTOR_MEMORY \
   > $LOG 2>&1
   RC=$?
