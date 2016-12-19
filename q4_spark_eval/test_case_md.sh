@@ -21,5 +21,5 @@ time_gatk() {
 
 for num_exec in 64
 do
-  time_gatk "MarkDuplicatesSpark -I hdfs:///user/$USER/q4_spark_eval/WGS-G94982-NA12878.bam -O hdfs:///user/$USER/q4_spark_eval/out/markdups" $num_exec 1 4g 4g >> test_case_md_results.csv
+  time_gatk "MarkDuplicatesSpark -I hdfs:///user/$USER/q4_spark_eval/WGS-G94982-NA12878.bam -O hdfs:///user/$USER/q4_spark_eval/out/markdups-sharded --shardedOutput true" $num_exec 1 4g 4g >> test_case_md_results.csv
 done
