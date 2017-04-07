@@ -13,7 +13,10 @@ import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.cmdline.programgroups.SparkProgramGroup;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.engine.spark.GATKSparkTool;
-import org.broadinstitute.hellbender.tools.spark.sv.*;
+import org.broadinstitute.hellbender.tools.spark.sv.evidence.SVKmer;
+import org.broadinstitute.hellbender.tools.spark.sv.evidence.SVKmerShort;
+import org.broadinstitute.hellbender.tools.spark.sv.evidence.SVKmerizer;
+import org.broadinstitute.hellbender.tools.spark.sv.utils.SVUtils;
 import org.broadinstitute.hellbender.tools.spark.utils.HopscotchSet;
 import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
 

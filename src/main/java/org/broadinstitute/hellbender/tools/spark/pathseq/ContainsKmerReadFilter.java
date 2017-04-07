@@ -1,9 +1,9 @@
 package org.broadinstitute.hellbender.tools.spark.pathseq;
 
 import org.broadinstitute.hellbender.engine.filters.ReadFilter;
-import org.broadinstitute.hellbender.tools.spark.sv.SVKmer;
-import org.broadinstitute.hellbender.tools.spark.sv.SVKmerShort;
-import org.broadinstitute.hellbender.tools.spark.sv.SVKmerizer;
+import org.broadinstitute.hellbender.tools.spark.sv.evidence.SVKmer;
+import org.broadinstitute.hellbender.tools.spark.sv.evidence.SVKmerShort;
+import org.broadinstitute.hellbender.tools.spark.sv.evidence.SVKmerizer;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.Set;
