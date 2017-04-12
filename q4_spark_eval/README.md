@@ -12,3 +12,12 @@ wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.
 gunzip human_g1k_v37.fasta.gz
 faToTwoBit human_g1k_v37.fasta human_g1k_v37.2bit
 ```
+
+## Running
+
+In this directory
+
+```bash
+export GATK_HOME=`pwd`/..
+./test_case_2.sh
+```
