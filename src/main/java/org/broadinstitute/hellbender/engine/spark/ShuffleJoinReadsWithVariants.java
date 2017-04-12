@@ -1,6 +1,8 @@
 package org.broadinstitute.hellbender.engine.spark;
 
 import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.broadinstitute.hellbender.engine.VariantShard;
@@ -58,6 +60,9 @@ import java.util.Set;
  * Tuple2<read b, <variant 3>>
  */
 public class ShuffleJoinReadsWithVariants {
+
+    private static final Logger log = LogManager.getLogger(ShuffleJoinReadsWithVariants.class);
+
     public static JavaPairRDD<GATKRead, Iterable<GATKVariant>> join(
             final JavaRDD<GATKRead> reads, final JavaRDD<GATKVariant> variants) {
 
@@ -114,12 +119,16 @@ public class ShuffleJoinReadsWithVariants {
             // For every read, find every overlapping variant.
             for (GATKRead r : iReads) {
                 boolean foundVariants = false;
-                SimpleInterval interval = new SimpleInterval(r);
-                for (GATKVariant v : iVariants) {
-                    if (interval.overlaps(v)) {
-                        foundVariants = true;
-                        out.add(new Tuple2<>(r, v));
+                try {
+                    SimpleInterval interval = new SimpleInterval(r);
+                    for (GATKVariant v : iVariants) {
+                        if (interval.overlaps(v)) {
+                            foundVariants = true;
+                            out.add(new Tuple2<>(r, v));
+                        }
                     }
+                } catch (IllegalArgumentException e) {
+                    log.error("Invalid read? " + r, e);
                 }
                 // If no variants are found, we still want to output the read.
                 if (!foundVariants) {
