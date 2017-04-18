@@ -71,7 +71,7 @@ public class AddContextDataToReadSpark {
             // Join Reads and Variants
             JavaPairRDD<GATKRead, Iterable<GATKVariant>> withVariants = ShuffleJoinReadsWithVariants.join(mappedReads, variants);
             // Join Reads with ReferenceBases
-            withVariantsWithRef = ShuffleJoinReadsWithRefBases.addBases(referenceSource, withVariants);
+            withVariantsWithRef = BroadcastJoinReadsWithRefBases.addBases(referenceSource, withVariants);
         } else if (joinStrategy.equals(JoinStrategy.OVERLAPS_PARTITIONER)) {
             return addUsingOverlapsPartitioning(ctx, reads, referenceSource, variants, sequenceDictionary, shardSize, shardPadding);
         } else {
