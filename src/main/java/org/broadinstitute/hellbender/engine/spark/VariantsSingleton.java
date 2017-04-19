@@ -33,7 +33,7 @@ public class VariantsSingleton {
      * @return List of GATKVariants.
      */
     static List<GATKVariant> getSerialVariants(final String vcf) {
-        try ( final FeatureDataSource<VariantContext> dataSource = new FeatureDataSource<>(new File(vcf), null, 0) ) {
+        try ( final FeatureDataSource<VariantContext> dataSource = new FeatureDataSource<>(vcf, null, 0, null) ) {
             return Lists.newArrayList(wrapQueryResults(dataSource.iterator()));
         }
     }
