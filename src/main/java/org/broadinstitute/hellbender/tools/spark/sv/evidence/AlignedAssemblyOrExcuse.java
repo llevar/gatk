@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * An assembly with its contigs aligned to referece, or a reason that there isn't an assembly.
+ * An assembly with its contigs aligned to reference, or a reason that there isn't an assembly.
  */
 @DefaultSerializer(AlignedAssemblyOrExcuse.Serializer.class)
 public final class AlignedAssemblyOrExcuse {
@@ -266,7 +266,7 @@ public final class AlignedAssemblyOrExcuse {
         return new Connection(target, overlapLen, isRC, isTargetRC);
     }
 
-    static void writeAlignment(final BwaMemAlignment alignment, final Output output) {
+    private static void writeAlignment(final BwaMemAlignment alignment, final Output output) {
         output.writeInt(alignment.getSamFlag());
         output.writeInt(alignment.getRefId());
         output.writeInt(alignment.getRefStart());
@@ -285,7 +285,7 @@ public final class AlignedAssemblyOrExcuse {
         output.writeInt(alignment.getTemplateLen());
     }
 
-    static BwaMemAlignment readAlignment(final Input input) {
+    private static BwaMemAlignment readAlignment(final Input input) {
         final int samFlag = input.readInt();
         final int refId = input.readInt();
         final int refStart = input.readInt();

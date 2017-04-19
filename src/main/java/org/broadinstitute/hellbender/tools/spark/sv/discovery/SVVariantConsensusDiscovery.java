@@ -15,7 +15,6 @@ import org.apache.spark.broadcast.Broadcast;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
 import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.SVVariantDiscoveryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
@@ -35,28 +34,7 @@ import java.util.stream.StreamSupport;
 public class SVVariantConsensusDiscovery implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * This method processes an RDD containing alignment regions, scanning for chimeric alignments which match a set of filtering
-     * criteria, and emitting novel adjacency not present on the reference used for aligning the contigs.
-     *
-     * The input RDD is of the form:
-     * Tuple2 of:
-     *     {@code Iterable<AlignmentRegion>} AlignmentRegion objects representing all alignments for one contig
-     *     A byte array with the sequence content of the contig
-     * @param alignmentRegionsWithContigSequence A data structure as described above, where a list of AlignmentRegions and the sequence of the contig are keyed by a tuple of Assembly ID and Contig ID
-     * @param logger                             for logging information and accredit to the calling tool
-     */
-    public static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment_old>> discoverNovelAdjacencyFromChimericAlignments_old(
-            final JavaPairRDD<Iterable<AlignmentRegion>, byte[]> alignmentRegionsWithContigSequence,
-            final Logger logger)
-    {
-        return alignmentRegionsWithContigSequence.filter(pair -> Iterables.size(pair._1())>1) // filter out any contigs that has less than two alignment records
-                .flatMap( input -> ChimericAlignment_old.fromSplitAlignments_old(input).iterator())              // 1. AR -> {CA}
-                .mapToPair(ca -> new Tuple2<>(new NovelAdjacencyReferenceLocations(ca), ca))             // 2. CA -> NovelAdjacency
-                .groupByKey();                                                                           // 3. {consensus NovelAdjacency}
-    }
-
-    public static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment_old>> discoverNovelAdjacencyFromChimericAlignments(
+    static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment_old>> discoverNovelAdjacencyFromChimericAlignments(
             final JavaRDD<Iterable<SAMRecord>> alignmentRegionsWithContigSequence,
             final Logger logger)
     {
@@ -219,12 +197,11 @@ public class SVVariantConsensusDiscovery implements Serializable {
         final List<String> insSeqMappings;
 
         BreakpointEvidenceAnnotations(final ChimericAlignment_old chimericAlignmentOld){
-            minMQ = Math.min(chimericAlignmentOld.regionWithLowerCoordOnContig.samRecord.getMappingQuality(), chimericAlignmentOld.regionWithHigherCoordOnContig.samRecord.getMappingQuality());
-            minAL = Math.min(chimericAlignmentOld.regionWithLowerCoordOnContig.samRecord.getAlignmentEnd() - chimericAlignmentOld.regionWithLowerCoordOnContig.samRecord.getAlignmentStart() + 1,
-                    chimericAlignmentOld.regionWithHigherCoordOnContig.samRecord.getAlignmentEnd() - chimericAlignmentOld.regionWithHigherCoordOnContig.samRecord.getAlignmentStart() + 1)
+            minMQ = Math.min(chimericAlignmentOld.regionWithLowerCoordOnContig.mapQual, chimericAlignmentOld.regionWithHigherCoordOnContig.mapQual);
+            minAL = Math.min(chimericAlignmentOld.regionWithLowerCoordOnContig.referenceInterval.size(), chimericAlignmentOld.regionWithHigherCoordOnContig.referenceInterval.size())
                     - SVVariantDiscoveryUtils.overlapOnContig(chimericAlignmentOld.regionWithLowerCoordOnContig, chimericAlignmentOld.regionWithHigherCoordOnContig);
-            asmID = chimericAlignmentOld.regionWithLowerCoordOnContig.assemblyId;
-            contigID = chimericAlignmentOld.regionWithLowerCoordOnContig.contigId;
+            asmID = chimericAlignmentOld.assemblyId;
+            contigID = chimericAlignmentOld.contigId;
             insSeqMappings = chimericAlignmentOld.insertionMappings;
         }
     }
@@ -234,8 +211,8 @@ public class SVVariantConsensusDiscovery implements Serializable {
 
         final List<BreakpointEvidenceAnnotations> annotations = StreamSupport.stream(splitAlignmentEvidence.spliterator(), false)
                 .sorted((final ChimericAlignment_old o1, final ChimericAlignment_old o2) -> { // sort by assembly id, then sort by contig id
-                    if (o1.regionWithLowerCoordOnContig.assemblyId.equals(o2.regionWithLowerCoordOnContig.assemblyId)) return o1.regionWithLowerCoordOnContig.contigId.compareTo(o2.regionWithLowerCoordOnContig.contigId);
-                    else return o1.regionWithLowerCoordOnContig.assemblyId.compareTo(o2.regionWithLowerCoordOnContig.assemblyId);
+                    if (o1.assemblyId.equals(o2.assemblyId)) return o1.contigId.compareTo(o2.contigId);
+                    else return o1.assemblyId.compareTo(o2.assemblyId);
                 })
                 .map(BreakpointEvidenceAnnotations::new).collect(Collectors.toList());
 

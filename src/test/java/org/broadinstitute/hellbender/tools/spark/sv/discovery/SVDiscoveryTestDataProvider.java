@@ -7,12 +7,11 @@ import htsjdk.samtools.util.SequenceUtil;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceWindowFunctions;
 import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
 import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import scala.Tuple2;
-import scala.Tuple3;
+import scala.Tuple5;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,21 +24,27 @@ import java.util.List;
  * Provides test data for testing several methods involved in the SV variant caller.
  * NO TESTS ARE RUN IN THIS PARTICULAR CLASS.
  */
-final class SVDiscoveryTestDataProvider {
+public final class SVDiscoveryTestDataProvider {
 
-    static final ReferenceMultiSource reference = new ReferenceMultiSource((PipelineOptions)null, BaseTest.b37_reference_20_21, ReferenceWindowFunctions.IDENTITY_FUNCTION);
-    static final SAMSequenceDictionary seqDict = reference.getReferenceSequenceDictionary(null);
+    public static final ReferenceMultiSource reference = new ReferenceMultiSource((PipelineOptions)null, BaseTest.b37_reference_20_21, ReferenceWindowFunctions.IDENTITY_FUNCTION);
+    public static final SAMSequenceDictionary seqDict = reference.getReferenceSequenceDictionary(null);
 
-    static byte[] getReverseComplimentCopy(final byte[] sequence) {
+    public static byte[] getReverseComplimentCopy(final byte[] sequence) {
         final byte[] sequenceCopy = Arrays.copyOf(sequence, sequence.length);
         SequenceUtil.reverseComplement(sequenceCopy);
         return sequenceCopy;
     }
 
+    public static byte[] makeDummySequence(final int length, byte base) {
+        final byte[] result = new byte[length];
+        Arrays.fill(result, base);
+        return result;
+    }
+
     // the chromosome that the long contig1 is supposed to be mapped to is actually chr19, but to make tests runnable, we could only use "20" or "21"
     // todo: this should be fixed, but since the exact mapped to chromosome is not important now, we push it to later
-    static final String chrForLongContig1 = "20";
-    static final String LONG_CONTIG1 =
+    public static final String chrForLongContig1 = "20";
+    public static final String LONG_CONTIG1 =
             "TTTTTTTTTTTTTTTCTGAGACCGAATCTCGCTCTGTCACCCAGGCTGGAGTGCAGTGGCACGATCTTGGCTTACTGCAAGCTCTGCCTCCTGGGTTCATGCCATTCTCCTGCCTCAGCCCCACCCCCCCACCCCCCCAGGTAGCTG" +
             "GGACTACAGGTGTCTGCCACCACACCTGGCTAAATTTTTTTGTATTTTTAGTAGAGACGGGGTTTCACCGTGTTAGCCAAGATGGTTTCGCTCTCCTGACCTCGCGATCCGCCCACCTCGGCCTCTCAAAGTGCTGGGATTACAGGCCTGAGCCACTGCGCCC" +
             "TGCCTGACCCCTTCTTTTAAAACAAATCTTTTGTCTTTGTCTTCATTTCTGCATTCGTCCCCTTCGTTCAATCCTGTAGGAATTGACAGTGATATTGGGGAGTTCCCATCCCTGGATTTGGGATTTCCTCGAGTTTCCAGCCCTGTCCTTGTGGCCAAAAAGT" +
@@ -80,35 +85,35 @@ final class SVDiscoveryTestDataProvider {
             "ACAGACTAAATGCCTATCAATGGCAGACTGGATCAAGAAAATATGGTATGGTCAGATGCGGTGGCTCATGCCTGTAATTCCAGCCCTTTGGGAGGCTGAGGCAGGTGGATTGCCTGAGCTTAGAAGTTTGAGACCACTCTGGGCAACATGGCAAAATTTTGTC" +
             "TCCACAGAAGATACAAAAAAAAAAAAAAAAAA";
 
-    static final boolean testDataInitialized;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInversionWithNovelInsertion;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInversionWithHom_leftPlus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInversionWithHom_leftMinus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInversionWithHom_rightPlus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInversionWithHom_rightMinus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleDeletion_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleDeletion_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInsertion_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleInsertion_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forLongRangeSubstitution_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forLongRangeSubstitution_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forDeletionWithHomology_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forDeletionWithHomology_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleTanDupContraction_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleTanDupContraction_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleTanDupExpansion_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleTanDupExpansion_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleTanDupExpansionWithNovelIns_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forSimpleTanDupExpansionWithNovelIns_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_1to2_pseudoHom_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_1to2_pseudoHom_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_2to1_pseudoHom_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_2to1_pseudoHom_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_3to2_noPseudoHom_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_3to2_noPseudoHom_minus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_2to3_noPseudoHom_plus;
-    static final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> forComplexTanDup_2to3_noPseudoHom_minus;
+    public static final boolean testDataInitialized;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInversionWithNovelInsertion;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInversionWithHom_leftPlus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInversionWithHom_leftMinus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInversionWithHom_rightPlus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInversionWithHom_rightMinus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleDeletion_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleDeletion_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInsertion_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleInsertion_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forLongRangeSubstitution_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forLongRangeSubstitution_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forDeletionWithHomology_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forDeletionWithHomology_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleTanDupContraction_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleTanDupContraction_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleTanDupExpansion_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleTanDupExpansion_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleTanDupExpansionWithNovelIns_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forSimpleTanDupExpansionWithNovelIns_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_1to2_pseudoHom_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_1to2_pseudoHom_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_2to1_pseudoHom_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_2to1_pseudoHom_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_3to2_noPseudoHom_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_3to2_noPseudoHom_minus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_2to3_noPseudoHom_plus;
+    public static final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> forComplexTanDup_2to3_noPseudoHom_minus;
 
     static {
         try{
@@ -117,41 +122,41 @@ final class SVDiscoveryTestDataProvider {
 
             forSimpleInversionWithNovelInsertion = forSimpleInversionWithNovelInsertion_leftFlankingForwardStrandOnly();
             forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint = forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint();
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> inversion4 = forSimpleInversionWithHomology(outputStream);
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> inversion4 = forSimpleInversionWithHomology(outputStream);
             forSimpleInversionWithHom_leftPlus = inversion4.get(0);
             forSimpleInversionWithHom_leftMinus = inversion4.get(1);
             forSimpleInversionWithHom_rightPlus = inversion4.get(2);
             forSimpleInversionWithHom_rightMinus = inversion4.get(3);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> simpleDeletion = forSimpleDeletion(outputStream);
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> simpleDeletion = forSimpleDeletion(outputStream);
             forSimpleDeletion_plus = simpleDeletion.get(0);
             forSimpleDeletion_minus = simpleDeletion.get(1);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> simpleInsertion = forSimpleInsertion(outputStream);
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> simpleInsertion = forSimpleInsertion(outputStream);
             forSimpleInsertion_plus = simpleInsertion.get(0);
             forSimpleInsertion_minus = simpleInsertion.get(1);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> longRangeSubstitution = forLongRangeSubstitution();
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> longRangeSubstitution = forLongRangeSubstitution();
             forLongRangeSubstitution_plus = longRangeSubstitution.get(0);
             forLongRangeSubstitution_minus = longRangeSubstitution.get(1);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> deletionWithHomology = forDeletionWithHomology(outputStream);
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> deletionWithHomology = forDeletionWithHomology(outputStream);
             forDeletionWithHomology_plus = deletionWithHomology.get(0);
             forDeletionWithHomology_minus = deletionWithHomology.get(1);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> simpleTandemDuplicationContraction = forSimpleTandemDuplicationContraction();
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> simpleTandemDuplicationContraction = forSimpleTandemDuplicationContraction();
             forSimpleTanDupContraction_plus = simpleTandemDuplicationContraction.get(0);
             forSimpleTanDupContraction_minus = simpleTandemDuplicationContraction.get(1);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> simpleTandemDuplicationExpansion = forSimpleTandemDuplicationExpansion(outputStream);
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> simpleTandemDuplicationExpansion = forSimpleTandemDuplicationExpansion(outputStream);
             forSimpleTanDupExpansion_plus = simpleTandemDuplicationExpansion.get(0);
             forSimpleTanDupExpansion_minus = simpleTandemDuplicationExpansion.get(1);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> simpleTandemDuplicationExpansionWithNovelInsertion = forSimpleTandemDuplicationExpansionWithNovelInsertion(outputStream);
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> simpleTandemDuplicationExpansionWithNovelInsertion = forSimpleTandemDuplicationExpansionWithNovelInsertion(outputStream);
             forSimpleTanDupExpansionWithNovelIns_plus = simpleTandemDuplicationExpansionWithNovelInsertion.get(0);
             forSimpleTanDupExpansionWithNovelIns_minus = simpleTandemDuplicationExpansionWithNovelInsertion.get(1);
 
-            final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> complexTandemDuplication = forComplexTandemDuplication();
+            final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> complexTandemDuplication = forComplexTandemDuplication();
             forComplexTanDup_1to2_pseudoHom_plus = complexTandemDuplication.get(0);
             forComplexTanDup_1to2_pseudoHom_minus = complexTandemDuplication.get(1);
             forComplexTanDup_2to1_pseudoHom_plus = complexTandemDuplication.get(2);
@@ -169,7 +174,7 @@ final class SVDiscoveryTestDataProvider {
         }
     }
 
-    private static Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>
+    private static Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>
     forSimpleInversionWithNovelInsertion_leftFlankingForwardStrandOnly() throws IOException {
         // inversion with inserted sequence
         final byte[] leftFlank = makeDummySequence(146, (byte)'A');
@@ -179,20 +184,29 @@ final class SVDiscoveryTestDataProvider {
         contigSeq[leftFlank.length] = (byte) 'T';
         System.arraycopy(rightFlankRC, 0, contigSeq, leftFlank.length+1, rightFlankRC.length);
 
-        final AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 108569149, 108569294), TextCigarCodec.decode("146M51S"), true, 60, 0, 1, 146);
-        final AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 108569315, 108569364), TextCigarCodec.decode("147S50M"), false, 60, 0, 148, 197);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        return new Tuple3<>(region1, region2, breakpoints);
+//        final AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 108569149, 108569294), TextCigarCodec.decode("146M51S"), true, 60, 0, 1, 146);
+//        final AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 108569315, 108569364), TextCigarCodec.decode("147S50M"), false, 60, 0, 148, 197);
+
+        final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 108569149, 108569294), 1, 146, TextCigarCodec.decode("146M51S"), true, 60, 0);
+        final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 108569315, 108569364), 148, 197, TextCigarCodec.decode("147S50M"), false, 60, 0);
+
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        return new Tuple5<>(region1, region2, breakpoints, "1", "contig-1");
     }
 
-    private static Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>
+    private static Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>
     forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint() throws IOException {
         // inversion with strange left breakpoint
         final byte[] contigSequence = LONG_CONTIG1.getBytes();
-        AlignmentRegion region1 = new AlignmentRegion("702700", "702700", new SimpleInterval(chrForLongContig1, 20138007, 20142231), TextCigarCodec.decode("1986S236M2D1572M1I798M5D730M1I347M4I535M"), false, 60, 36, 1, contigSequence.length - 1986);
-        AlignmentRegion region2 = new AlignmentRegion("702700", "702700", new SimpleInterval(chrForLongContig1, 20152030, 20154634), TextCigarCodec.decode("3603H24M1I611M1I1970M"), true, 60, 36, 3604, contigSequence.length);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(ChimericAlignment_old.fromSplitAlignments_old(new Tuple2<>(Arrays.asList(region1, region2), contigSequence)).get(0));
-        return new Tuple3<>(region1, region2, breakpoints);
+
+//        AlignmentRegion region1 = new AlignmentRegion("702700", "702700", new SimpleInterval(chrForLongContig1, 20138007, 20142231), TextCigarCodec.decode("1986S236M2D1572M1I798M5D730M1I347M4I535M"), false, 60, 36, 1, contigSequence.length - 1986);
+//        AlignmentRegion region2 = new AlignmentRegion("702700", "702700", new SimpleInterval(chrForLongContig1, 20152030, 20154634), TextCigarCodec.decode("3603H24M1I611M1I1970M"), true, 60, 36, 3604, contigSequence.length);
+
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval(chrForLongContig1, 20138007, 20142231), 1, contigSequence.length - 1986, TextCigarCodec.decode("1986S236M2D1572M1I798M5D730M1I347M4I535M"), false, 60, 36);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval(chrForLongContig1, 20152030, 20154634), 3604, contigSequence.length, TextCigarCodec.decode("3603H24M1I611M1I1970M"), true, 60, 36);
+
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(ChimericAlignment_old.fromSplitAlignments_old(new Tuple2<>(Arrays.asList(region1, region2), contigSequence), "702700", "702700").get(0));
+        return new Tuple5<>(region1, region2, breakpoints, "702700", "702700");
     }
 
     /**
@@ -206,12 +220,12 @@ final class SVDiscoveryTestDataProvider {
      * ending with 100-bases of 'A' and maybe (homologyForwardStrandRep uncertainty) the homologyForwardStrandRep |TGTGT| is inverted.
      * 100-bases of 'T' is the right flanking region.
      *
-     * Returns a list of four Tuple3's with left flanking evidence '+'/'-' strand representation and right flanking side.
+     * Returns a list of four Tuple5's with left flanking evidence '+'/'-' strand representation and right flanking side.
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forSimpleInversionWithHomology(final ByteArrayOutputStream outputStream) throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
 
         final byte[] leftLeftPlus = makeDummySequence(100, (byte)'G');
         final byte[] leftLeftMinus = makeDummySequence(100, (byte)'C');
@@ -227,37 +241,46 @@ final class SVDiscoveryTestDataProvider {
             outputStream.reset();
             outputStream.write(leftLeftPlus);outputStream.write(leftHomology);outputStream.write(rightLeftMinus);
             byte[] contigSeq = outputStream.toByteArray();
-            AlignmentRegion region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 101, 205), TextCigarCodec.decode("105M100S"), true, 60, 0, 1, 105);
-            AlignmentRegion region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 501, 605), TextCigarCodec.decode("100S105M"), false, 60, 0, 101, 205);
-            final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>()));
-            result.add(new Tuple3<>(region1, region2, breakpoints));
+//            AlignmentRegion region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 101, 205), TextCigarCodec.decode("105M100S"), true, 60, 0, 1, 105);
+//            AlignmentRegion region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 501, 605), TextCigarCodec.decode("100S105M"), false, 60, 0, 101, 205);
+
+            AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 101, 205), 1, 105, TextCigarCodec.decode("105M100S"), true, 60, 0);
+            AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 501, 605), 101, 205, TextCigarCodec.decode("100S105M"), false, 60, 0);
+            final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>(), "1","1"));
+            result.add(new Tuple5<>(region1, region2, breakpoints, "1","1"));
 
             outputStream.reset();
             outputStream.write(rightLeftPlus);outputStream.write(rightHomology);outputStream.write(leftLeftMinus);
             contigSeq = outputStream.toByteArray();
-            region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 501, 605), TextCigarCodec.decode("105M100S"), true, 60, 0, 1, 105);
-            region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 101, 205), TextCigarCodec.decode("100S105M"), false, 60, 0, 101, 205);
-            final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>()));
-            result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+            // region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 501, 605), TextCigarCodec.decode("105M100S"), true, 60, 0, 1, 105);
+            // region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 101, 205), TextCigarCodec.decode("100S105M"), false, 60, 0, 101, 205);
+            region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 501, 605), 1, 105, TextCigarCodec.decode("105M100S"), true, 60, 0);
+            region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 101, 205), 101, 205, TextCigarCodec.decode("100S105M"), false, 60, 0);
+            final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>(), "1","1"));
+            result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1","1"));
         }
         {// right flanking evidence '+'/'-' strand representation
             outputStream.reset();
             outputStream.write(leftRightMinus);outputStream.write(rightHomology);outputStream.write(rightRightPlus);
             byte[] contigSeq = outputStream.toByteArray();
 
-            AlignmentRegion region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 201, 305), TextCigarCodec.decode("105M100S"), false, 60, 0, 1, 105);
-            AlignmentRegion region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 601, 705), TextCigarCodec.decode("100S105M"), true, 60, 0, 101, 205);
-            final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>()));
-            result.add(new Tuple3<>(region1, region2, breakpoints));
+            // AlignmentRegion region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 201, 305), TextCigarCodec.decode("105M100S"), false, 60, 0, 1, 105);
+            // AlignmentRegion region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 601, 705), TextCigarCodec.decode("100S105M"), true, 60, 0, 101, 205);
+            AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 201, 305), 1, 105, TextCigarCodec.decode("105M100S"), false, 60, 0);
+            AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 601, 705), 101, 205, TextCigarCodec.decode("100S105M"), true, 60, 0);
+            final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>(), "1","1"));
+            result.add(new Tuple5<>(region1, region2, breakpoints, "1","1"));
 
             outputStream.reset();
             outputStream.write(rightRightMinus);outputStream.write(leftHomology);outputStream.write(leftRightPlus);
             contigSeq = outputStream.toByteArray();
 
-            region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 601, 705), TextCigarCodec.decode("105M100S"), false, 60, 0, 1, 105);
-            region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 201, 305), TextCigarCodec.decode("100S105M"), true, 60, 0, 101, 205);
-            final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>()));
-            result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+            // region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 601, 705), TextCigarCodec.decode("105M100S"), false, 60, 0, 1, 105);
+            // region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 201, 305), TextCigarCodec.decode("100S105M"), true, 60, 0, 101, 205);
+            region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 601, 705), 1, 105, TextCigarCodec.decode("105M100S"), false, 60, 0);
+            region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 201, 305), 101, 205, TextCigarCodec.decode("100S105M"), true, 60, 0);
+            final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, new ArrayList<>(), "1","1"));
+            result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1","1"));
         }
         return result;
     }
@@ -267,20 +290,22 @@ final class SVDiscoveryTestDataProvider {
      *
      * Return a list of two entries for positive and reverse strand representations.
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forSimpleDeletion(final ByteArrayOutputStream outputStream) throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
         // simple deletion '+' strand representation
         final byte[] leftRefFlank = makeDummySequence(40, (byte)'A');
         final byte[] rightRefFlank = makeDummySequence(40, (byte)'G');
         outputStream.reset();
         outputStream.write(leftRefFlank);outputStream.write(rightRefFlank);
         byte[] contigSeq = outputStream.toByteArray();
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("40M40S"), true, 60, 0, 1 ,40);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("40S40M"), true, 60, 0, 41 ,80);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("40M40S"), true, 60, 0, 1 ,40);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("40S40M"), true, 60, 0, 41 ,80);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100040), 1 ,40, TextCigarCodec.decode("40M40S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100061, 100100), 41 ,80, TextCigarCodec.decode("40S40M"), true, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // simple deletion '-' strand representation
         SequenceUtil.reverseComplement(leftRefFlank);
@@ -288,10 +313,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.reset();
         outputStream.write(rightRefFlank);outputStream.write(leftRefFlank);
         contigSeq = outputStream.toByteArray();
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("40M40S"), false, 60, 0, 1 ,40);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("40S40M"), false, 60, 0, 41 ,80);
-        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("40M40S"), false, 60, 0, 1 ,40);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("40S40M"), false, 60, 0, 41 ,80);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100061, 100100), 1 ,40, TextCigarCodec.decode("40M40S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100040), 41 ,80, TextCigarCodec.decode("40S40M"), false, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1", "contig-1"));
 
         return result;
     }
@@ -300,9 +327,9 @@ final class SVDiscoveryTestDataProvider {
      * 100-'A' + 100-'T' and a 50 bases of 'C' is inserted at the A->T junction point (forward strand description)
      * Return a list of two entries for positive and reverse strand representations.
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forSimpleInsertion(final ByteArrayOutputStream outputStream) throws IOException {
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
 
         // simple insertion '+' strand representation
         final byte[] leftRefFlank = makeDummySequence(100, (byte)'A');
@@ -311,10 +338,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.reset();
         outputStream.write(leftRefFlank);outputStream.write(insertedSeq);outputStream.write(rightRefFlank);
         byte[] contigSeq = outputStream.toByteArray();
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100100), TextCigarCodec.decode("100M100S"), true, 60, 0, 1 ,100);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100101, 100200), TextCigarCodec.decode("100S100M"), true, 60, 0, 151 ,250);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100100), TextCigarCodec.decode("100M100S"), true, 60, 0, 1 ,100);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100101, 100200), TextCigarCodec.decode("100S100M"), true, 60, 0, 151 ,250);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100100), 1 ,100, TextCigarCodec.decode("100M100S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100101, 100200), 151 ,250, TextCigarCodec.decode("100S100M"), true, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // simple insertion '-' strand representation
         SequenceUtil.reverseComplement(leftRefFlank);
@@ -323,10 +352,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.reset();
         outputStream.write(rightRefFlank);outputStream.write(insertedSeq);outputStream.write(leftRefFlank);
         contigSeq = outputStream.toByteArray();
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100101, 100200), TextCigarCodec.decode("100M100S"), false, 60, 0, 1 ,100);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100100), TextCigarCodec.decode("100S100M"), false, 60, 0, 151 ,250);
-        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100101, 100200), TextCigarCodec.decode("100M100S"), false, 60, 0, 1 ,100);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100100), TextCigarCodec.decode("100S100M"), false, 60, 0, 151 ,250);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100101, 100200), 1 ,100, TextCigarCodec.decode("100M100S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100100), 151 ,250, TextCigarCodec.decode("100S100M"), false, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1", "contig-1"));
 
         return result;
     }
@@ -334,10 +365,10 @@ final class SVDiscoveryTestDataProvider {
     /**
      * 50-'A' + 50-'C' where the middle 10-'A'+10-'C' is substituted with 10-'G' (forward strand representation)
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forLongRangeSubstitution() throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
 
         // long range substitution '+' strand representation
         final byte[] leftRefFlank = makeDummySequence(50, (byte)'A');
@@ -347,10 +378,12 @@ final class SVDiscoveryTestDataProvider {
         System.arraycopy(leftRefFlank, 0, contigSeq, 0, 40);
         System.arraycopy(substitution, 0, contigSeq, 40, substitution.length);
         System.arraycopy(rightRefFlank, 0, contigSeq, 50, 40);
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("40M50S"), true, 60, 0, 1 ,40);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("50S40M"), true, 60, 0, 51 ,90);
-        NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("40M50S"), true, 60, 0, 1 ,40);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("50S40M"), true, 60, 0, 51 ,90);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100040), 1 ,40, TextCigarCodec.decode("40M50S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100061, 100100), 51 ,90, TextCigarCodec.decode("50S40M"), true, 60, 0);
+        NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // long range substitution '-' strand representation
         SequenceUtil.reverseComplement(leftRefFlank);
@@ -359,10 +392,12 @@ final class SVDiscoveryTestDataProvider {
         System.arraycopy(rightRefFlank, 0, contigSeq, 0, 40);
         System.arraycopy(substitution, 0, contigSeq, 40, substitution.length);
         System.arraycopy(leftRefFlank, 0, contigSeq, 40 + substitution.length, 40);
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("40M50S"), false, 60, 0, 1 ,40);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("50S40M"), false, 60, 0, 51 ,90);
-        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100061, 100100), TextCigarCodec.decode("40M50S"), false, 60, 0, 1 ,40);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100040), TextCigarCodec.decode("50S40M"), false, 60, 0, 51 ,90);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100061, 100100), 1 ,40, TextCigarCodec.decode("40M50S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100040), 51 ,90, TextCigarCodec.decode("50S40M"), false, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1", "contig-1"));
 
         return result;
     }
@@ -371,10 +406,10 @@ final class SVDiscoveryTestDataProvider {
      * 40-'C' + 'ATCG' + 34 bases of unique sequence + 'ATCG' + 40-'T' is shrunk to 40-'C' + 'ATCG' + 40-'T' (forward strand representation)
      * Return a list of two entries for positive and reverse strand representations.
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forDeletionWithHomology(final ByteArrayOutputStream outputStream) throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
 
         // simple deletion with homology '+' strand representation
         final byte[] leftRefFlank = makeDummySequence(40, (byte)'C');
@@ -383,10 +418,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.reset();
         outputStream.write(leftRefFlank);outputStream.write(homology);outputStream.write(rightRefFlank);
         byte[] contigSeq = outputStream.toByteArray();
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100044), TextCigarCodec.decode("44M40S"), true, 60, 0, 1 ,44);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100079, 100122), TextCigarCodec.decode("40S44M"), true, 60, 0, 41 ,84);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100044), TextCigarCodec.decode("44M40S"), true, 60, 0, 1 ,44);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100079, 100122), TextCigarCodec.decode("40S44M"), true, 60, 0, 41 ,84);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100044), 1 ,44, TextCigarCodec.decode("44M40S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100079, 100122), 41 ,84, TextCigarCodec.decode("40S44M"), true, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // simple deletion with homology '-' strand representation
         SequenceUtil.reverseComplement(leftRefFlank);
@@ -395,10 +432,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.reset();
         outputStream.write(rightRefFlank);outputStream.write(homology);outputStream.write(leftRefFlank);
         contigSeq = outputStream.toByteArray();
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100079, 100122), TextCigarCodec.decode("44M40S"), false, 60, 0, 1 ,44);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100044), TextCigarCodec.decode("40S44M"), false, 60, 0, 41 ,84);
-        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100079, 100122), TextCigarCodec.decode("44M40S"), false, 60, 0, 1 ,44);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100044), TextCigarCodec.decode("40S44M"), false, 60, 0, 41 ,84);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100079, 100122), 1 ,44, TextCigarCodec.decode("44M40S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100044), 41 ,84, TextCigarCodec.decode("40S44M"), false, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1", "contig-1"));
 
         return result;
     }
@@ -407,10 +446,10 @@ final class SVDiscoveryTestDataProvider {
      * 40-'A' + 20-'C' + 40-'G' is shrunk to 40-'A' + 10-'C' + 40-'G' (forward strand representation)
      * Return a list of two entries for positive and reverse strand representations.
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forSimpleTandemDuplicationContraction() throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
 
         // simple tandem duplication contraction '+' strand representation
         final byte[] leftRefFlank = makeDummySequence(40, (byte)'A');
@@ -421,10 +460,12 @@ final class SVDiscoveryTestDataProvider {
         System.arraycopy(doubleDup, 0, contigSeq, 40, 10);
         System.arraycopy(rightRefFlank, 0, contigSeq, 50, 40);
 
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("50M40S"), true, 60, 0, 1 ,50);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100051, 100100), TextCigarCodec.decode("40S50M"), true, 60, 0, 41 ,100);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("50M40S"), true, 60, 0, 1 ,50);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100051, 100100), TextCigarCodec.decode("40S50M"), true, 60, 0, 41 ,100);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100050), 1 ,50, TextCigarCodec.decode("50M40S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100051, 100100), 41 ,100, TextCigarCodec.decode("40S50M"), true, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // simple tandem duplication contraction '-' strand representation
         SequenceUtil.reverseComplement(leftRefFlank);
@@ -433,10 +474,12 @@ final class SVDiscoveryTestDataProvider {
         System.arraycopy(rightRefFlank, 0, contigSeq, 0, 40);
         System.arraycopy(doubleDup, 0, contigSeq, 40, 10);
         System.arraycopy(leftRefFlank, 0, contigSeq, 50, 40);
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100051, 100100), TextCigarCodec.decode("50M40S"), false, 60, 0, 1 ,50);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("40S50M"), false, 60, 0, 41 ,100);
-        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+//        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100051, 100100), TextCigarCodec.decode("50M40S"), false, 60, 0, 1 ,50);
+//        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("40S50M"), false, 60, 0, 41 ,100);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100051, 100100), 1 ,50, TextCigarCodec.decode("50M40S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100050), 41 ,100, TextCigarCodec.decode("40S50M"), false, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1", "contig-1"));
 
         return result;
     }
@@ -445,10 +488,10 @@ final class SVDiscoveryTestDataProvider {
      * 40-'A' + 10-'C' + 40-'G' is expanded to 40-'A' + 20-'C' + 40-'G' (forward strand representation)
      * Return a list of two entries for positive and reverse strand representations.
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forSimpleTandemDuplicationExpansion(final ByteArrayOutputStream outputStream) throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
 
         // simple tandem duplication expansion '+' strand representation
         final byte[] leftRefFlank = makeDummySequence(40, (byte)'A');
@@ -458,10 +501,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.write(leftRefFlank);outputStream.write(doubleDup);outputStream.write(rightRefFlank);
         byte[] contigSeq = outputStream.toByteArray();
 
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("50M50S"), true, 60, 0, 1 ,50);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100041, 100090), TextCigarCodec.decode("50S50M"), true, 60, 0, 51 ,100);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("50M50S"), true, 60, 0, 1 ,50);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100041, 100090), TextCigarCodec.decode("50S50M"), true, 60, 0, 51 ,100);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100050), 1 ,50, TextCigarCodec.decode("50M50S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100041, 100090), 51 ,100, TextCigarCodec.decode("50S50M"), true, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // simple tandem duplication expansion '-' strand representation
         SequenceUtil.reverseComplement(leftRefFlank);
@@ -470,10 +515,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.reset();
         outputStream.write(rightRefFlank);outputStream.write(doubleDup);outputStream.write(leftRefFlank);
         contigSeq = outputStream.toByteArray();
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100041, 100090), TextCigarCodec.decode("50M50S"), false, 60, 0, 1 ,50);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("50S50M"), false, 60, 0, 51 ,100);
-        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100041, 100090), TextCigarCodec.decode("50M50S"), false, 60, 0, 1 ,50);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100050), TextCigarCodec.decode("50S50M"), false, 60, 0, 51 ,100);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100041, 100090), 1 ,50, TextCigarCodec.decode("50M50S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100050), 51 ,100, TextCigarCodec.decode("50S50M"), false, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1", "contig-1"));
 
         return result;
     }
@@ -491,10 +538,10 @@ final class SVDiscoveryTestDataProvider {
      *
      * Return a list of two entries for positive and reverse strand representations.
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forSimpleTandemDuplicationExpansionWithNovelInsertion(final ByteArrayOutputStream outputStream) throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
         // simple tandem duplication expansion with novel insertion '+' strand representation
         final byte[] leftRefFlank = "GTTAGTAGATATTCTAGCTGACTCAGTTCAGTGTTGCTATGATTAAACAAGAGTGAGTTCCCT".getBytes();                     //63
         final byte[] rightRefFlank = "CATTATTGATATTTCATTATGTTCAACAGATGGAGTTAATGTGAATGT".getBytes();                                   //48
@@ -504,10 +551,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.write(leftRefFlank);outputStream.write(dup);outputStream.write(insertedSeq);outputStream.write(dup);outputStream.write(rightRefFlank);
         byte[] contigSeq = outputStream.toByteArray();
 
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297101, 25297252), TextCigarCodec.decode("152M147S"), true, 60, 0, 1 ,152);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297164, 25297300), TextCigarCodec.decode("162S137M"), true, 60, 0, 163 ,299);
-        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297101, 25297252), TextCigarCodec.decode("152M147S"), true, 60, 0, 1 ,152);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297164, 25297300), TextCigarCodec.decode("162S137M"), true, 60, 0, 163 ,299);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 25297101, 25297252), 1 ,152, TextCigarCodec.decode("152M147S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 25297164, 25297300), 163 ,299, TextCigarCodec.decode("162S137M"), true, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // simple tandem duplication expansion with novel insertion '-' strand representation
         SequenceUtil.reverseComplement(leftRefFlank);
@@ -518,10 +567,12 @@ final class SVDiscoveryTestDataProvider {
         outputStream.write(rightRefFlank);outputStream.write(dup);outputStream.write(insertedSeq);outputStream.write(dup);outputStream.write(leftRefFlank);
         contigSeq = outputStream.toByteArray();
 
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297164, 25297300), TextCigarCodec.decode("137M162S"), false, 60, 0, 1 ,137);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297101, 25297252), TextCigarCodec.decode("147S152M"), false, 60, 0, 148 ,299);
-        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpointsDetectedFromReverseStrand));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297164, 25297300), TextCigarCodec.decode("137M162S"), false, 60, 0, 1 ,137);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 25297101, 25297252), TextCigarCodec.decode("147S152M"), false, 60, 0, 148 ,299);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 25297164, 25297300), 1 ,137, TextCigarCodec.decode("137M162S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 25297101, 25297252), 148 ,299, TextCigarCodec.decode("147S152M"), false, 60, 0);
+        final NovelAdjacencyReferenceLocations breakpointsDetectedFromReverseStrand = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpointsDetectedFromReverseStrand, "1", "contig-1"));
 
         return result;
     }
@@ -539,10 +590,10 @@ final class SVDiscoveryTestDataProvider {
      * 3. contraction from 3 units to 2 units without pseudo-homology
      * 4. expansion from 2 units to 3 units without pseudo-homology
      */
-    private static List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>>
+    private static List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>>
     forComplexTandemDuplication() throws IOException {
 
-        final List<Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations>> result = new ArrayList<>();
+        final List<Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String>> result = new ArrayList<>();
         final String leftRefFlank       = "TGCCAGGTTACATGGCAAAGAGGGTAGATAT";                                                                    // 31
         final String rightRefFlank      = "TGGTGCAAATGCCATTTATGCTCCTCTCCACCCATATCC";                                                            // 39
         final String firstRepeat        = "GGGGAGCTGTGAAGAATGGAGCCAGTAATTAAATTCACTGAAGTCTCCACAGGAGGGCAAGGTGGACAATCTGTCCCATAGGAGGGGGATTCATGA";   // 96
@@ -553,79 +604,89 @@ final class SVDiscoveryTestDataProvider {
         // first test (the original observed event, but assigned to a different chromosome): expansion from 1 unit to 2 units with pseudo-homology
         final byte[] fakeRefSeqForComplexExpansionWithPseudoHomology = String.format("%s%s%s%s", leftRefFlank, firstRepeat, pseudoHomology, rightRefFlank).getBytes();
         final byte[] contigSeqForComplexExpansionWithPseudoHomology = String.format("%s%s%s%s%s", leftRefFlank, firstRepeat, secondRepeat, pseudoHomology, rightRefFlank).getBytes();
-        AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("140M135S"), true, 60, 0, 1 ,140);
-        AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312757), TextCigarCodec.decode("127S148M"), true, 60, 0, 128 ,275);
-        NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionWithPseudoHomology, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("140M135S"), true, 60, 0, 1 ,140);
+        // AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312757), TextCigarCodec.decode("127S148M"), true, 60, 0, 128 ,275);
+        AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312718), 1 ,140, TextCigarCodec.decode("140M135S"), true, 60, 0);
+        AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312610, 312757), 128 ,275, TextCigarCodec.decode("127S148M"), true, 60, 0);
+        NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionWithPseudoHomology, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         final byte[] fakeRefSeqForComplexExpansionWithPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexExpansionWithPseudoHomology, fakeRefSeqForComplexExpansionWithPseudoHomology.length);
         final byte[] contigSeqForComplexExpansionWithPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexExpansionWithPseudoHomology, contigSeqForComplexExpansionWithPseudoHomology.length);
         SequenceUtil.reverseComplement(fakeRefSeqForComplexExpansionWithPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexExpansionWithPseudoHomology_reverseStrand);
 
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312757), TextCigarCodec.decode("148M127S"), false, 60, 0, 1 ,148);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("135S140M"), false, 60, 0, 136 ,275);
-        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionWithPseudoHomology_reverseStrand, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312757), TextCigarCodec.decode("148M127S"), false, 60, 0, 1 ,148);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("135S140M"), false, 60, 0, 136 ,275);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312610, 312757), 1 ,148, TextCigarCodec.decode("148M127S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312718), 136 ,275, TextCigarCodec.decode("135S140M"), false, 60, 0);
+        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionWithPseudoHomology_reverseStrand, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // second test: contraction from 2 units to 1 unit with pseudo-homology
         final byte[] fakeRefSeqForComplexContractionWithPseudoHomology = contigSeqForComplexExpansionWithPseudoHomology;
         final byte[] contigSeqForComplexContractionWithPseudoHomology = fakeRefSeqForComplexExpansionWithPseudoHomology;
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("140M39S"), true, 60, 0, 1, 140);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312853), TextCigarCodec.decode("31S148M"), true, 60, 0, 32, 179);
-        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionWithPseudoHomology, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("140M39S"), true, 60, 0, 1, 140);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312853), TextCigarCodec.decode("31S148M"), true, 60, 0, 32, 179);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312718), 1, 140, TextCigarCodec.decode("140M39S"), true, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312706, 312853), 32, 179, TextCigarCodec.decode("31S148M"), true, 60, 0);
+        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionWithPseudoHomology, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         final byte[] fakeRefSeqForComplexContractionWithPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexContractionWithPseudoHomology, fakeRefSeqForComplexContractionWithPseudoHomology.length);
         final byte[] contigSeqForComplexContractionWithPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexContractionWithPseudoHomology, contigSeqForComplexContractionWithPseudoHomology.length);
         SequenceUtil.reverseComplement(fakeRefSeqForComplexContractionWithPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexContractionWithPseudoHomology_reverseStrand);
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312853), TextCigarCodec.decode("148M31S"), false, 60, 0, 1, 148);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("39S140M"), false, 60, 0, 40, 179);
-        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionWithPseudoHomology_reverseStrand, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312853), TextCigarCodec.decode("148M31S"), false, 60, 0, 1, 148);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312718), TextCigarCodec.decode("39S140M"), false, 60, 0, 40, 179);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312706, 312853), 1, 148, TextCigarCodec.decode("148M31S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312718), 40, 179, TextCigarCodec.decode("39S140M"), false, 60, 0);
+        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionWithPseudoHomology_reverseStrand, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // third test: contraction from 3 units to 2 units without pseudo-homology
         final byte[] fakeRefSeqForComplexContractionNoPseudoHomology = String.format("%s%s%s%s%s", leftRefFlank, firstRepeat, secondRepeat, firstRepeat, rightRefFlank).getBytes();
         final byte[] contigSeqForComplexContractionNoPseudoHomology = String.format("%s%s%s%s", leftRefFlank, firstRepeat, secondRepeat, rightRefFlank).getBytes();
 
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("223M39S"), true, 60, 0, 1, 223);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312936), TextCigarCodec.decode("31S231M"), true, 60, 0, 32, 262);
-        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionNoPseudoHomology, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("223M39S"), true, 60, 0, 1, 223);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312936), TextCigarCodec.decode("31S231M"), true, 60, 0, 32, 262);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312801), 1, 223, TextCigarCodec.decode("223M39S"), true, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312706, 312936), 32, 262, TextCigarCodec.decode("31S231M"), true, 60, 0);
+        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionNoPseudoHomology, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         final byte[] fakeRefSeqForComplexContractionNoPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexContractionNoPseudoHomology, fakeRefSeqForComplexContractionNoPseudoHomology.length);
         final byte[] contigSeqForComplexContractionNoPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexContractionNoPseudoHomology, contigSeqForComplexContractionNoPseudoHomology.length);
         SequenceUtil.reverseComplement(fakeRefSeqForComplexContractionNoPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexContractionNoPseudoHomology_reverseStrand);
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312936), TextCigarCodec.decode("231M31S"), false, 60, 0, 1, 231);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("39S223M"), false, 60, 0, 40, 262);
-        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionNoPseudoHomology_reverseStrand, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312706, 312936), TextCigarCodec.decode("231M31S"), false, 60, 0, 1, 231);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("39S223M"), false, 60, 0, 40, 262);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312706, 312936), 1, 231, TextCigarCodec.decode("231M31S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312801), 40, 262, TextCigarCodec.decode("39S223M"), false, 60, 0);
+        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexContractionNoPseudoHomology_reverseStrand, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         // fourth test: expansion from 2 units to 3 units without pseudo-homology
         final byte[] fakeRefSeqForComplexExpansionNoPseudoHomology = contigSeqForComplexContractionNoPseudoHomology;
         final byte[] contigSeqForComplexExpansionNoPseudoHomology = fakeRefSeqForComplexContractionNoPseudoHomology;
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("223M135S"), true, 60, 0, 1, 223);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312840), TextCigarCodec.decode("127S231M"), true, 60, 0, 128, 358);
-        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionNoPseudoHomology, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+        // region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("223M135S"), true, 60, 0, 1, 223);
+        // region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312840), TextCigarCodec.decode("127S231M"), true, 60, 0, 128, 358);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312801), 1, 223, TextCigarCodec.decode("223M135S"), true, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312610, 312840), 128, 358, TextCigarCodec.decode("127S231M"), true, 60, 0);
+        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionNoPseudoHomology, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
         final byte[] fakeRefSeqForComplexExpansionNoPseudoHomology_reverseStrand = Arrays.copyOf(fakeRefSeqForComplexExpansionNoPseudoHomology, fakeRefSeqForComplexExpansionNoPseudoHomology.length);
         final byte[] contigSeqForComplexExpansionNoPseudoHomology_reverseStrand = Arrays.copyOf(contigSeqForComplexExpansionNoPseudoHomology, contigSeqForComplexExpansionNoPseudoHomology.length);
         SequenceUtil.reverseComplement(fakeRefSeqForComplexExpansionNoPseudoHomology_reverseStrand);
         SequenceUtil.reverseComplement(contigSeqForComplexExpansionNoPseudoHomology_reverseStrand);
-        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312840), TextCigarCodec.decode("231M127S"), false, 60, 0, 1, 231);
-        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("135S223M"), false, 60, 0, 136, 358);
-        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionNoPseudoHomology_reverseStrand, Collections.emptyList()));
-        result.add(new Tuple3<>(region1, region2, breakpoints));
+//        region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312610, 312840), TextCigarCodec.decode("231M127S"), false, 60, 0, 1, 231);
+//        region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 312579, 312801), TextCigarCodec.decode("135S223M"), false, 60, 0, 136, 358);
+        region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312610, 312840), 1, 231, TextCigarCodec.decode("231M127S"), false, 60, 0);
+        region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 312579, 312801), 136, 358, TextCigarCodec.decode("135S223M"), false, 60, 0);
+        breakpoints = new NovelAdjacencyReferenceLocations(new ChimericAlignment_old(region1, region2, contigSeqForComplexExpansionNoPseudoHomology_reverseStrand, Collections.emptyList(), "1", "contig-1"));
+        result.add(new Tuple5<>(region1, region2, breakpoints, "1", "contig-1"));
 
-        return result;
-    }
-
-    static byte[] makeDummySequence(final int length, byte base) {
-        final byte[] result = new byte[length];
-        Arrays.fill(result, base);
         return result;
     }
 }

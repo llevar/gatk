@@ -69,7 +69,7 @@ public class FindBreakpointEvidenceSparkIntegrationTest extends CommandLineProgr
         return tests.toArray(new Object[][]{});
     }
 
-    @Test(dataProvider = "findBreakpointEvidenceSparkIntegrationTest", groups = "sv")
+    @Test(dataProvider = "findBreakpointEvidenceSparkIntegrationTest", groups = "sv", enabled = false)
     public void testFindBreakpointRunnableLocal(final FindBreakpointEvidenceSparkIntegrationTestArgs params) throws IOException {
 
         new IntegrationTestSpec(
@@ -78,7 +78,7 @@ public class FindBreakpointEvidenceSparkIntegrationTest extends CommandLineProgr
                 .executeTest("testFindBreakpointEvidenceSparkRunnableLocal-", this);
     }
 
-    @Test(dataProvider = "findBreakpointEvidenceSparkIntegrationTest", groups = "sv")
+    @Test(dataProvider = "findBreakpointEvidenceSparkIntegrationTest", groups = "sv", enabled = false)
     public void testFindBreakpointRunnableMiniCluster(final FindBreakpointEvidenceSparkIntegrationTestArgs params) throws Exception {
 
         MiniClusterUtils.runOnIsolatedMiniCluster(cluster -> {

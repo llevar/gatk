@@ -31,8 +31,6 @@ import java.util.Objects;
 @DefaultSerializer(AlignmentRegion.Serializer.class)
 public class AlignmentRegion {
 
-    public SAMRecord samRecord;
-
     public static final String STRING_REP_SEPARATOR= "\t";
     public static final String PACKED_STRING_REP_SEPARATOR= "_";
     public static final char ASSEMBLY_CONTIG_SEPARATOR = ':';
@@ -55,9 +53,6 @@ public class AlignmentRegion {
 
     public AlignmentRegion(final String assemblyId, final String contigId, final int contigLen,
                            final BwaMemAlignment alignment, final List<String> refNames) {
-
-        this.samRecord = BwaMemAlignmentUtils.applyAlignment(assemblyId + ":" + contigId, new byte[contigLen], new byte[contigLen], null,
-                alignment, refNames, null, false, false);
 
         this.contigId = contigId;
         this.assemblyId = assemblyId;
@@ -83,17 +78,6 @@ public class AlignmentRegion {
                            final Cigar cigarAlong5to3DirectionOfContig, final boolean forwardStrand, final int mapQual, final int mismatches,
                            final int startInAssembledContig, final int endInAssembledContig) {
 
-        this.samRecord = new SAMRecord(null);
-        samRecord.setReadName(assemblyId + ":" + contigId);
-        samRecord.setCigar(forwardStrand ? cigarAlong5to3DirectionOfContig : CigarUtils.invertCigar(cigarAlong5to3DirectionOfContig));
-        samRecord.setReferenceName(referenceInterval.getContig());
-        samRecord.setAlignmentStart(referenceInterval.getStart());
-        samRecord.setMappingQuality(mapQual);
-        samRecord.setAttribute("NM", mismatches);
-        samRecord.setReadNegativeStrandFlag(!forwardStrand);
-        samRecord.setReadBases(new byte[cigarAlong5to3DirectionOfContig.getReadLength()]);
-        samRecord.setBaseQualities(new byte[cigarAlong5to3DirectionOfContig.getReadLength()]);
-
         this.assemblyId = assemblyId;
         this.contigId = contigId;
         this.referenceInterval = referenceInterval;
@@ -107,7 +91,6 @@ public class AlignmentRegion {
     }
 
     public AlignmentRegion(final GATKRead read) {
-        this.samRecord = read.convertToSAMRecord(null);
         final String readName = read.getName();
         final int splitPos = readName.indexOf(ASSEMBLY_CONTIG_SEPARATOR);
         if ( splitPos == -1 ) {
@@ -145,18 +128,9 @@ public class AlignmentRegion {
         return SVVariantDiscoveryUtils.getNumClippedBases(true, cigarAlong5to3DirectionOfContig) + 1;
     }
 
-    public static int startOfAlignmentInContig(final SAMRecord samRecord) {
-        return SVVariantDiscoveryUtils.getNumClippedBases(true, samRecord.getReadNegativeStrandFlag()? CigarUtils.invertCigar(samRecord.getCigar()) : samRecord.getCigar()) + 1;
-    }
-
     @VisibleForTesting
     public int endOfAlignmentInContig() {
         return assembledContigLength - SVVariantDiscoveryUtils.getNumClippedBases(false, cigarAlong5to3DirectionOfContig);
-    }
-
-    public static int endOfAlignmentInContig(final SAMRecord samRecord) {
-        final Cigar cigar = samRecord.getCigar();
-        return cigar.getReadLength() + SVVariantDiscoveryUtils.getTotalHardClipping(cigar) - SVVariantDiscoveryUtils.getNumClippedBases(false, samRecord.getReadNegativeStrandFlag()? CigarUtils.invertCigar(cigar) : cigar);
     }
 
     // TODO: 11/27/16 test

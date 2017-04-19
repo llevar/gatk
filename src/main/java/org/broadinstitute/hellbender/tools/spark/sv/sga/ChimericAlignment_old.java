@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.AlignedAssembly;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.SVVariantDiscoveryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
@@ -24,8 +25,14 @@ import java.util.stream.StreamSupport;
 @DefaultSerializer(ChimericAlignment_old.Serializer.class)
 public class ChimericAlignment_old {
 
-    public final AlignmentRegion regionWithLowerCoordOnContig;
-    public final AlignmentRegion regionWithHigherCoordOnContig;
+//    public final AlignmentRegion regionWithLowerCoordOnContig;
+//    public final AlignmentRegion regionWithHigherCoordOnContig;
+
+    public final String assemblyId;
+    public final String contigId;
+
+    public final AlignedAssembly.AlignmentInterval regionWithLowerCoordOnContig;
+    public final AlignedAssembly.AlignmentInterval regionWithHigherCoordOnContig;
 
     public final StrandSwitch strandSwitch;
     public final boolean isForwardStrandRepresentation;
@@ -48,13 +55,14 @@ public class ChimericAlignment_old {
      *
      * @param input     made of ({alignmentRegions}, sequence) of a signalling locally-assembled contig
      *
-     * @return          the chimeric alignments of this sequence (empty if the sequence does not have any alignments)
+     * @param assemblyId
+     *@param contigId @return          the chimeric alignments of this sequence (empty if the sequence does not have any alignments)
      */
     @VisibleForTesting
-    public static List<ChimericAlignment_old> fromSplitAlignments_old(final Tuple2<Iterable<AlignmentRegion>, byte[]> input) {
+    public static List<ChimericAlignment_old> fromSplitAlignments_old(final Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]> input, String assemblyId, String contigId) {
 
         final byte[] sequence = input._2;
-        final List<AlignmentRegion> alignmentRegionsSortedByContigCoord = StreamSupport.stream(input._1().spliterator(), false).sorted(Comparator.comparing(a -> AlignmentRegion.startOfAlignmentInContig(a.samRecord))).collect(Collectors.toList());
+        final List<AlignedAssembly.AlignmentInterval> alignmentRegionsSortedByContigCoord = StreamSupport.stream(input._1().spliterator(), false).sorted(Comparator.comparing(a -> a.startInAssembledContig)).collect(Collectors.toList());
         if (alignmentRegionsSortedByContigCoord.size() < 2) {
             return new ArrayList<>();
         }
@@ -62,29 +70,29 @@ public class ChimericAlignment_old {
         final List<ChimericAlignment_old> results = new ArrayList<>(alignmentRegionsSortedByContigCoord.size() - 1);
         final List<String> insertionAlignmentRegions = new ArrayList<>();
 
-        final Iterator<AlignmentRegion> iterator = alignmentRegionsSortedByContigCoord.iterator();
+        final Iterator<AlignedAssembly.AlignmentInterval> iterator = alignmentRegionsSortedByContigCoord.iterator();
 
         // fast forward to the first alignment region with high MapQ
-        AlignmentRegion current = iterator.next();
+        AlignedAssembly.AlignmentInterval current = iterator.next();
         while (mapQualTooLow(current) && iterator.hasNext()) {
             current = iterator.next();
         }
 
         // then iterate over the AR's in pair to identify CA's.
         while ( iterator.hasNext() ) {
-            final AlignmentRegion next = iterator.next();
+            final AlignedAssembly.AlignmentInterval next = iterator.next();
             if (firstAlignmentIsTooShort(current, next, SVConstants.DiscoveryStepConstants.DEFAULT_MIN_ALIGNMENT_LENGTH)) {
                 continue;
             } else if (nextAlignmentMayBeNovelInsertion(current, next, SVConstants.DiscoveryStepConstants.DEFAULT_MIN_ALIGNMENT_LENGTH)) {
                 if (iterator.hasNext()) {
-                    insertionAlignmentRegions.add(next.toPackedString());
+                    insertionAlignmentRegions.add(next.toPackedString(assemblyId, contigId));
                     continue;
                 } else {
                     break;
                 }
             }
 
-            final ChimericAlignment_old ca = new ChimericAlignment_old(current, next, sequence, insertionAlignmentRegions);
+            final ChimericAlignment_old ca = new ChimericAlignment_old(current, next, sequence, insertionAlignmentRegions, assemblyId, contigId);
 
             final boolean involvesRefIntervalSwitch = involvesRefPositionSwitch(ca.regionWithLowerCoordOnContig, ca.regionWithHigherCoordOnContig);
             final boolean isNotSimpleTranslocation = isNotSimpleTranslocation(ca.regionWithLowerCoordOnContig, ca.regionWithHigherCoordOnContig, ca.strandSwitch, involvesRefIntervalSwitch);
@@ -98,30 +106,26 @@ public class ChimericAlignment_old {
     }
 
     // TODO: 11/22/16 it might also be suitable to consider the reference context this alignment region is mapped to and not simply apply a hard filter (need to think about how to test)
-    static boolean mapQualTooLow(final AlignmentRegion next) {
-        return next.samRecord.getMappingQuality() < SVConstants.DiscoveryStepConstants.CHIMERIC_ALIGNMENTS_HIGHMQ_THRESHOLD;
+    static boolean mapQualTooLow(final AlignedAssembly.AlignmentInterval next) {
+        return next.mapQual < SVConstants.DiscoveryStepConstants.CHIMERIC_ALIGNMENTS_HIGHMQ_THRESHOLD;
     }
 
     @VisibleForTesting
-    public static boolean firstAlignmentIsTooShort(final AlignmentRegion first, final AlignmentRegion second,
+    public static boolean firstAlignmentIsTooShort(final AlignedAssembly.AlignmentInterval first, final AlignedAssembly.AlignmentInterval second,
                                                    final Integer minAlignLength) {
-        final boolean old = first.referenceInterval.size() - SVVariantDiscoveryUtils.overlapOnContig(first, second) < minAlignLength;
-        final boolean update = first.samRecord.getAlignmentEnd()-first.samRecord.getAlignmentStart()+1 - SVVariantDiscoveryUtils.overlapOnContig(first, second) < minAlignLength;
-        return old;    }
+        return first.referenceInterval.size() - SVVariantDiscoveryUtils.overlapOnContig(first, second) < minAlignLength;
+    }
 
     /**
      * To implement the idea that for two consecutive alignment regions of a contig, the one with higher reference coordinate might be a novel insertion.
      */
     @VisibleForTesting
-    public static boolean nextAlignmentMayBeNovelInsertion(final AlignmentRegion current, final AlignmentRegion next,
+    public static boolean nextAlignmentMayBeNovelInsertion(final AlignedAssembly.AlignmentInterval current, final AlignedAssembly.AlignmentInterval next,
                                                            final Integer minAlignLength) {
-        final  SimpleInterval a = new SimpleInterval(current.samRecord);
-        final SimpleInterval b = new SimpleInterval(next.samRecord);
-
-        return mapQualTooLow(next) ||                               // inserted sequence might have low mapping quality
-                firstAlignmentIsTooShort(next, current, minAlignLength) ||     // inserted sequence might be very small
-                a.contains(b) ||   // one might completely contain the other
-                b.contains(a);
+        return mapQualTooLow(next) ||                                           // inserted sequence might have low mapping quality
+                firstAlignmentIsTooShort(next, current, minAlignLength) ||      // inserted sequence might be very small
+                current.referenceInterval.contains(next.referenceInterval) ||   // one might completely contain the other
+                next.referenceInterval.contains(current.referenceInterval);
     }
 
     /**
@@ -130,20 +134,20 @@ public class ChimericAlignment_old {
      * and input alignment regions are NOT completely enclosed in the other.
      */
     @VisibleForTesting
-    public ChimericAlignment_old(final AlignmentRegion regionWithLowerCoordOnContig, final AlignmentRegion regionWithHigherCoordOnContig,
-                                 final byte[] contigSequence, final List<String> insertionMappings) {
+    public ChimericAlignment_old(final AlignedAssembly.AlignmentInterval regionWithLowerCoordOnContig, final AlignedAssembly.AlignmentInterval regionWithHigherCoordOnContig,
+                                 final byte[] contigSequence, final List<String> insertionMappings, String assemblyId, String contigId) {
 
-        final String assemblyId = regionWithLowerCoordOnContig.assemblyId;
-        final String contigId = regionWithLowerCoordOnContig.contigId;
-        Utils.validateArg(assemblyId.equals(regionWithHigherCoordOnContig.assemblyId), "two alignment regions used to construct chimeric alignment are not from the same local assembly.");
-        Utils.validateArg(contigId.equals(regionWithHigherCoordOnContig.contigId), "two alignment regions used to construct chimeric alignment are not from the same assembled contig.");
+//        Utils.validateArg(assemblyId.equals(regionWithHigherCoordOnContig.assemblyId), "two alignment regions used to construct chimeric alignment are not from the same local assembly.");
+//        Utils.validateArg(contigId.equals(regionWithHigherCoordOnContig.contigId), "two alignment regions used to construct chimeric alignment are not from the same assembled contig.");
+
+        this.assemblyId = assemblyId;
+        this.contigId = contigId;
 
         this.regionWithLowerCoordOnContig = regionWithLowerCoordOnContig;
         this.regionWithHigherCoordOnContig = regionWithHigherCoordOnContig;
-        final SimpleInterval interval_1 = new SimpleInterval( regionWithLowerCoordOnContig.samRecord );
-        final SimpleInterval interval_2 = new SimpleInterval( regionWithHigherCoordOnContig.samRecord );
-        Utils.validateArg(!interval_1.contains(interval_2) && !interval_2.contains(interval_1),
-                "one alignment region contains the other, which is wrong " + regionWithLowerCoordOnContig.toPackedString() + regionWithHigherCoordOnContig.toPackedString());
+        Utils.validateArg(!regionWithLowerCoordOnContig.referenceInterval.contains(regionWithHigherCoordOnContig.referenceInterval) && !regionWithHigherCoordOnContig.referenceInterval.contains(regionWithLowerCoordOnContig.referenceInterval),
+                "one alignment region contains the other, which is wrong " + regionWithLowerCoordOnContig.toPackedString(assemblyId, contigId) + regionWithHigherCoordOnContig.toPackedString(assemblyId, contigId));
+
 
         this.strandSwitch = determineStrandSwitch(regionWithLowerCoordOnContig, regionWithHigherCoordOnContig);
         final boolean involvesRefIntervalSwitch = involvesRefPositionSwitch(regionWithLowerCoordOnContig, regionWithHigherCoordOnContig);
@@ -155,11 +159,11 @@ public class ChimericAlignment_old {
     }
 
     @VisibleForTesting
-    public static StrandSwitch determineStrandSwitch(final AlignmentRegion first, final AlignmentRegion second) {
-        if (first.samRecord.getReadNegativeStrandFlag() == second.samRecord.getReadNegativeStrandFlag()) {
+    public static StrandSwitch determineStrandSwitch(final AlignedAssembly.AlignmentInterval first, final AlignedAssembly.AlignmentInterval second) {
+        if (first.forwardStrand == second.forwardStrand) {
             return StrandSwitch.NO_SWITCH;
         } else {
-            return first.samRecord.getReadNegativeStrandFlag() ? StrandSwitch.REVERSE_TO_FORWARD : StrandSwitch.FORWARD_TO_REVERSE;
+            return first.forwardStrand ? StrandSwitch.FORWARD_TO_REVERSE : StrandSwitch.REVERSE_TO_FORWARD;
         }
     }
 
@@ -167,10 +171,10 @@ public class ChimericAlignment_old {
      * Determine if the region that maps to a lower coordinate on the contig also maps to a lower coordinate on the reference.
      */
     @VisibleForTesting
-    public static boolean involvesRefPositionSwitch(final AlignmentRegion regionWithLowerCoordOnContig,
-                                                    final AlignmentRegion regionWithHigherCoordOnContig) {
+    public static boolean involvesRefPositionSwitch(final AlignedAssembly.AlignmentInterval regionWithLowerCoordOnContig,
+                                                    final AlignedAssembly.AlignmentInterval regionWithHigherCoordOnContig) {
 
-        return regionWithHigherCoordOnContig.samRecord.getAlignmentStart() < regionWithLowerCoordOnContig.samRecord.getAlignmentStart();
+        return regionWithHigherCoordOnContig.referenceInterval.getStart() < regionWithLowerCoordOnContig.referenceInterval.getStart();
     }
 
     // TODO: 12/15/16 simple translocations are defined here and at this time as inter-chromosomal ones and
@@ -182,17 +186,17 @@ public class ChimericAlignment_old {
      * DOES NOT involve a strand switch.
      */
     @VisibleForTesting
-    public static boolean isNotSimpleTranslocation(final AlignmentRegion regionWithLowerCoordOnContig,
-                                                   final AlignmentRegion regionWithHigherCoordOnContig,
+    public static boolean isNotSimpleTranslocation(final AlignedAssembly.AlignmentInterval regionWithLowerCoordOnContig,
+                                                   final AlignedAssembly.AlignmentInterval regionWithHigherCoordOnContig,
                                                    final StrandSwitch strandSwitch,
                                                    final boolean involvesReferenceIntervalSwitch) {
         // logic is: must be the same reference chromosome for it not to be an inter-chromosomal translocation
         //           and when regions are mapped to the same reference chromosome, there cannot be reference position swap
-        final boolean sameChromosome = regionWithLowerCoordOnContig.samRecord.getContig().equals(regionWithHigherCoordOnContig.samRecord.getContig());
+        final boolean sameChromosome = regionWithLowerCoordOnContig.referenceInterval.getContig().equals(regionWithHigherCoordOnContig.referenceInterval.getContig());
         return sameChromosome
                 &&
                 (strandSwitch!=StrandSwitch.NO_SWITCH
-                        || involvesReferenceIntervalSwitch == regionWithLowerCoordOnContig.samRecord.getReadNegativeStrandFlag());
+                        || involvesReferenceIntervalSwitch == !regionWithLowerCoordOnContig.forwardStrand);
     }
 
     /**
@@ -200,13 +204,13 @@ public class ChimericAlignment_old {
      * besides the annotation that the alignment flanking regions might flank either side of the two breakpoints.
      */
     @VisibleForTesting
-    public static boolean isForwardStrandRepresentation(final AlignmentRegion regionWithLowerCoordOnContig,
-                                                        final AlignmentRegion regionWithHigherCoordOnContig,
+    public static boolean isForwardStrandRepresentation(final AlignedAssembly.AlignmentInterval regionWithLowerCoordOnContig,
+                                                        final AlignedAssembly.AlignmentInterval regionWithHigherCoordOnContig,
                                                         final StrandSwitch strandSwitch,
                                                         final boolean involvesReferenceIntervalSwitch) {
 
         if (strandSwitch == StrandSwitch.NO_SWITCH) {
-            return (!regionWithLowerCoordOnContig.samRecord.getReadNegativeStrandFlag()) && (!regionWithHigherCoordOnContig.samRecord.getReadNegativeStrandFlag());
+            return regionWithLowerCoordOnContig.forwardStrand && regionWithHigherCoordOnContig.forwardStrand;
         } else {
             return !involvesReferenceIntervalSwitch;
         }
@@ -214,15 +218,18 @@ public class ChimericAlignment_old {
 
     public Tuple2<SimpleInterval, SimpleInterval> getCoordSortedReferenceIntervals() {
         if (involvesRefPositionSwitch(regionWithLowerCoordOnContig, regionWithHigherCoordOnContig))
-            return new Tuple2<>(new SimpleInterval(regionWithHigherCoordOnContig.samRecord), new SimpleInterval(regionWithLowerCoordOnContig.samRecord));
+            return new Tuple2<>(regionWithHigherCoordOnContig.referenceInterval, regionWithLowerCoordOnContig.referenceInterval);
         else
-            return new Tuple2<>(new SimpleInterval(regionWithLowerCoordOnContig.samRecord), new SimpleInterval(regionWithHigherCoordOnContig.samRecord));
+            return new Tuple2<>(regionWithLowerCoordOnContig.referenceInterval, regionWithHigherCoordOnContig.referenceInterval);
     }
 
     protected ChimericAlignment_old(final Kryo kryo, final Input input) {
 
-        this.regionWithLowerCoordOnContig = kryo.readObject(input, AlignmentRegion.class);
-        this.regionWithHigherCoordOnContig = kryo.readObject(input, AlignmentRegion.class);
+        this.assemblyId = input.readString();
+        this.contigId = input.readString();
+
+        this.regionWithLowerCoordOnContig = kryo.readObject(input, AlignedAssembly.AlignmentInterval.class);
+        this.regionWithHigherCoordOnContig = kryo.readObject(input, AlignedAssembly.AlignmentInterval.class);
 
         this.strandSwitch = StrandSwitch.values()[input.readInt()];
         this.isForwardStrandRepresentation = input.readBoolean();
@@ -244,6 +251,9 @@ public class ChimericAlignment_old {
     }
 
     protected void serialize(final Kryo kryo, final Output output) {
+
+        output.writeString(assemblyId);
+        output.writeString(contigId);
 
         kryo.writeObject(output, regionWithLowerCoordOnContig);
         kryo.writeObject(output, regionWithHigherCoordOnContig);

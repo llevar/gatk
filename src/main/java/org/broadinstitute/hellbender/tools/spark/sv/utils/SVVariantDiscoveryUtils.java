@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.AlignedAssembly;
 import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
 import org.broadinstitute.hellbender.utils.Utils;
 
@@ -20,16 +21,22 @@ public final class SVVariantDiscoveryUtils {
      */
     @VisibleForTesting
     public static int overlapOnContig(final AlignmentRegion one, final AlignmentRegion two) {
-        Utils.validate(one.endInAssembledContig == AlignmentRegion.endOfAlignmentInContig(one.samRecord), "");
-        Utils.validate(two.endInAssembledContig == AlignmentRegion.endOfAlignmentInContig(two.samRecord), "");
-        Utils.validate(one.startInAssembledContig == AlignmentRegion.startOfAlignmentInContig(one.samRecord), "");
-        Utils.validate(two.startInAssembledContig == AlignmentRegion.startOfAlignmentInContig(two.samRecord), "");
-        final int old = Math.max(0, Math.min(one.endInAssembledContig + 1, two.endInAssembledContig + 1) - Math.max(one.startInAssembledContig, two.startInAssembledContig));
-        final int update =  Math.max(0,
-                Math.min(AlignmentRegion.endOfAlignmentInContig(one.samRecord) + 1, AlignmentRegion.endOfAlignmentInContig(two.samRecord) + 1)
-                        -
-                        Math.max(AlignmentRegion.startOfAlignmentInContig(one.samRecord), AlignmentRegion.startOfAlignmentInContig(two.samRecord)));
-        return old;
+        return Math.max(0, Math.min(one.endInAssembledContig + 1, two.endInAssembledContig + 1) - Math.max(one.startInAssembledContig, two.startInAssembledContig));
+    }
+
+    /**
+     * @return the number of bases of two alignment regions overlap on the locally-assembled contig they originate from.
+     *          Mostly useful for computing micro-homologyForwardStrandRep.
+     */
+    @VisibleForTesting
+    public static int overlapOnContig(final AlignedAssembly.AlignmentInterval one, final AlignedAssembly.AlignmentInterval two) {
+        return Math.max(0, Math.min(one.endInAssembledContig + 1, two.endInAssembledContig + 1) - Math.max(one.startInAssembledContig, two.startInAssembledContig));
+    }
+
+    public static int overlapOnContig(final int alignmentOneStartInAssembledContig, final int alignmentTwoStartInAssembledContig,
+                                      final int alignmentOneEndInAssembledContig,   final int alignmentTwoEndInAssembledContig) {
+        return Math.max(0, Math.min(alignmentOneEndInAssembledContig, alignmentTwoEndInAssembledContig) + 1
+                           - Math.max(alignmentOneStartInAssembledContig, alignmentTwoStartInAssembledContig));
     }
 
     /**

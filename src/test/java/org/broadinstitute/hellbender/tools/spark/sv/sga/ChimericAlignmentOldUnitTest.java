@@ -1,27 +1,26 @@
-package org.broadinstitute.hellbender.tools.spark.sv.discovery;
+package org.broadinstitute.hellbender.tools.spark.sv.sga;
 
 import htsjdk.samtools.TextCigarCodec;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.AlignedAssembly;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.NovelAdjacencyReferenceLocations;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.SVDiscoveryTestDataProvider;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import scala.Tuple3;
+import scala.Tuple5;
 
 public class ChimericAlignmentOldUnitTest extends BaseTest {
 
     @Test
     public void testFilterByRegionTooSmall() {
         final byte[] contigSequence = SVDiscoveryTestDataProvider.LONG_CONTIG1.getBytes();
-        final AlignmentRegion region1 = new AlignmentRegion("702700", "702700", new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20138007, 20142231), TextCigarCodec.decode("1986S236M2D1572M1I798M5D730M1I347M4I535M"), false, 60, 36, 1, contigSequence.length - 1986);
-        final AlignmentRegion region2 = new AlignmentRegion("702700", "702700", new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20152030, 20154634), TextCigarCodec.decode("3603H24M1I611M1I1970M"), true, 60, 36, 3604, contigSequence.length);
-
-        Assert.assertEquals(AlignmentRegion.startOfAlignmentInContig(region1.samRecord), region1.startOfAlignmentInContig());
-        Assert.assertEquals(AlignmentRegion.endOfAlignmentInContig(region1.samRecord), region1.endOfAlignmentInContig());
-        Assert.assertEquals(AlignmentRegion.startOfAlignmentInContig(region2.samRecord), region2.startOfAlignmentInContig());
-        Assert.assertEquals(AlignmentRegion.endOfAlignmentInContig(region2.samRecord), region2.endOfAlignmentInContig());
+//        final AlignmentRegion region1 = new AlignmentRegion("702700", "702700", new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20138007, 20142231), TextCigarCodec.decode("1986S236M2D1572M1I798M5D730M1I347M4I535M"), false, 60, 36, 1, contigSequence.length - 1986);
+//        final AlignmentRegion region2 = new AlignmentRegion("702700", "702700", new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20152030, 20154634), TextCigarCodec.decode("3603H24M1I611M1I1970M"), true, 60, 36, 3604, contigSequence.length);
+        final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20138007, 20142231), 1, contigSequence.length - 1986, TextCigarCodec.decode("1986S236M2D1572M1I798M5D730M1I347M4I535M"), false, 60, 36);
+        final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval(SVDiscoveryTestDataProvider.chrForLongContig1, 20152030, 20154634), 3604, contigSequence.length, TextCigarCodec.decode("3603H24M1I611M1I1970M"), true, 60, 36);
 
         Assert.assertFalse( ChimericAlignment_old.firstAlignmentIsTooShort(region1, region2, SVConstants.DiscoveryStepConstants.DEFAULT_MIN_ALIGNMENT_LENGTH) );
         Assert.assertFalse( ChimericAlignment_old.firstAlignmentIsTooShort(region2, region1, SVConstants.DiscoveryStepConstants.DEFAULT_MIN_ALIGNMENT_LENGTH) );
@@ -32,8 +31,10 @@ public class ChimericAlignmentOldUnitTest extends BaseTest {
 
     @Test
     public void testFilterByNextAlignmentMayBeNovelInsertion() throws Exception {
-        AlignmentRegion overlappingRegion1 = new AlignmentRegion("overlap", "22", new SimpleInterval("19", 48699881, 48700035), TextCigarCodec.decode("47S154M"), false, 60, 0, 1, 154);
-        AlignmentRegion overlappingRegion2 = new AlignmentRegion("overlap", "22", new SimpleInterval("19", 48700584, 48700669), TextCigarCodec.decode("116H85M"), true, 60, 0, 117, 201);
+//        final AlignmentRegion overlappingRegion1 = new AlignmentRegion("overlap", "22", new SimpleInterval("19", 48699881, 48700035), TextCigarCodec.decode("47S154M"), false, 60, 0, 1, 154);
+//        final AlignmentRegion overlappingRegion2 = new AlignmentRegion("overlap", "22", new SimpleInterval("19", 48700584, 48700669), TextCigarCodec.decode("116H85M"), true, 60, 0, 117, 201);
+        final AlignedAssembly.AlignmentInterval overlappingRegion1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("19", 48699881, 48700035), 1, 154, TextCigarCodec.decode("47S154M"), false, 60, 0);
+        final AlignedAssembly.AlignmentInterval overlappingRegion2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("19", 48700584, 48700669), 117, 201, TextCigarCodec.decode("116H85M"), true, 60, 0);
 
         Assert.assertTrue(ChimericAlignment_old.nextAlignmentMayBeNovelInsertion(overlappingRegion1, overlappingRegion2, 50));
     }
@@ -41,7 +42,7 @@ public class ChimericAlignmentOldUnitTest extends BaseTest {
     @Test
     public void testBooleanStates_inversion() {
 
-        Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
+        Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.REVERSE_TO_FORWARD, false, true, true);
 
         testData = SVDiscoveryTestDataProvider.forSimpleInversionWithHom_leftPlus;
@@ -61,7 +62,7 @@ public class ChimericAlignmentOldUnitTest extends BaseTest {
     public void testBooleanStates_simpleInsertionAndDeletion() {
 
         // simple deletion
-        Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData = SVDiscoveryTestDataProvider.forSimpleDeletion_plus;
+        Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData = SVDiscoveryTestDataProvider.forSimpleDeletion_plus;
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.NO_SWITCH, false, true, true);
         testData = SVDiscoveryTestDataProvider.forSimpleDeletion_minus;
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.NO_SWITCH, true, true, false);
@@ -89,7 +90,7 @@ public class ChimericAlignmentOldUnitTest extends BaseTest {
     public void testBooleanStates_tandemDuplication_simple() {
 
         // tandem duplication simple contraction
-        Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData = SVDiscoveryTestDataProvider.forSimpleTanDupContraction_plus;
+        Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData = SVDiscoveryTestDataProvider.forSimpleTanDupContraction_plus;
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.NO_SWITCH, false, true, true);
         testData = SVDiscoveryTestDataProvider.forSimpleTanDupContraction_minus;
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.NO_SWITCH, true, true, false);
@@ -111,7 +112,7 @@ public class ChimericAlignmentOldUnitTest extends BaseTest {
     public void testBooleanStates_tandemDuplication_complex() {
 
         // first test (the original observed event, but assigned to a different chromosome): expansion from 1 unit to 2 units with pseudo-homology
-        Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData = SVDiscoveryTestDataProvider.forComplexTanDup_1to2_pseudoHom_plus;
+        Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData = SVDiscoveryTestDataProvider.forComplexTanDup_1to2_pseudoHom_plus;
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.NO_SWITCH, false, true, true);
         testData = SVDiscoveryTestDataProvider.forComplexTanDup_1to2_pseudoHom_minus;
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.NO_SWITCH, true, true, false);
@@ -135,7 +136,7 @@ public class ChimericAlignmentOldUnitTest extends BaseTest {
         testBooleanSeries(testData._1(), testData._2(), ChimericAlignment_old.StrandSwitch.NO_SWITCH, true, true, false);
     }
 
-    private static void testBooleanSeries(final AlignmentRegion region1, final AlignmentRegion region2,
+    private static void testBooleanSeries(final AlignedAssembly.AlignmentInterval region1, final AlignedAssembly.AlignmentInterval region2,
                                           final ChimericAlignment_old.StrandSwitch expectedStrandSwitch,
                                           final boolean expectedRefPositionSwitch,
                                           final boolean expectedIsNotSimpleTranslocation,

@@ -1,9 +1,8 @@
-package org.broadinstitute.hellbender.tools.spark.sv.discovery;
+package org.broadinstitute.hellbender.tools.spark.sv.sga;
 
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.SAMFlag;
 import htsjdk.samtools.TextCigarCodec;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.bwa.BwaMemAlignment;
 import org.broadinstitute.hellbender.utils.read.CigarUtils;
@@ -77,11 +76,11 @@ public class AlignmentRegionUnitTest {
                                  final int expectedContigLength, final AlignmentRegion expectedAlignmentRegion) {
 
         final AlignmentRegion alignmentRegion = new AlignmentRegion("1", "1", expectedContigLength, bwaMemAlignment, refNames);
-        Assert.assertEquals(new SimpleInterval(alignmentRegion.samRecord), expectedReferenceInterval);
-//        Assert.assertEquals(alignmentRegion.getCigarAlong5to3DirectionOfContig(), expectedCigar);
-        Assert.assertEquals(alignmentRegion.samRecord.getReadNegativeStrandFlag(), !expectedIsPositiveStrand);
-        Assert.assertEquals(AlignmentRegion.startOfAlignmentInContig(alignmentRegion.samRecord), expectedStartOnContig_1BasedInclusive);
-        Assert.assertEquals(AlignmentRegion.endOfAlignmentInContig(alignmentRegion.samRecord), expectedEndOnContig_1BasedInclusive);
+        Assert.assertEquals(alignmentRegion.referenceInterval, expectedReferenceInterval);
+        Assert.assertEquals(alignmentRegion.cigarAlong5to3DirectionOfContig, expectedCigar);
+        Assert.assertEquals(alignmentRegion.forwardStrand, expectedIsPositiveStrand);
+        Assert.assertEquals(alignmentRegion.startInAssembledContig, expectedStartOnContig_1BasedInclusive);
+        Assert.assertEquals(alignmentRegion.endInAssembledContig, expectedEndOnContig_1BasedInclusive);
         Assert.assertEquals(alignmentRegion, expectedAlignmentRegion);
     }
 
@@ -89,22 +88,22 @@ public class AlignmentRegionUnitTest {
     public void testParseAlignedAssembledContigLine() throws Exception {
         final String line = "100\t>contig-0 2498 0\t1\t7043012\t7044153\t+\t1141M1357S\t60\t1\t1141\t1";
         final AlignmentRegion region1 = AlignmentRegion.fromString(line.split(AlignmentRegion.STRING_REP_SEPARATOR, -1));
-        Assert.assertEquals(new SimpleInterval(region1.samRecord), new SimpleInterval("1", 7043012, 7044153));
-        Assert.assertFalse(region1.samRecord.getReadNegativeStrandFlag());
-//        Assert.assertEquals(region1.getCigarAlong5to3DirectionOfContig().toString(), "1141M1357S");
-        Assert.assertEquals(region1.samRecord.getMappingQuality(), 60);
-        Assert.assertEquals(AlignmentRegion.startOfAlignmentInContig(region1.samRecord), 1);
-        Assert.assertEquals(AlignmentRegion.endOfAlignmentInContig(region1.samRecord), 1141);
-        Assert.assertEquals((int) region1.samRecord.getAttribute("NM"), 1);
+        Assert.assertEquals(region1.referenceInterval, new SimpleInterval("1", 7043012, 7044153));
+        Assert.assertTrue(region1.forwardStrand);
+        Assert.assertEquals(region1.cigarAlong5to3DirectionOfContig.toString(), "1141M1357S");
+        Assert.assertEquals(region1.mapQual, 60);
+        Assert.assertEquals(region1.startInAssembledContig, 1);
+        Assert.assertEquals(region1.endInAssembledContig, 1141);
+        Assert.assertEquals(region1.mismatches, 1);
 
         final String line2 = "100\tcontig-0\t1\t7044151\t7045306\t+\t1343S1155M\t60\t1344\t2498\t3";
         final AlignmentRegion region2 = AlignmentRegion.fromString(line2.split(AlignmentRegion.STRING_REP_SEPARATOR, -1));
-        Assert.assertEquals(new SimpleInterval(region2.samRecord), new SimpleInterval("1", 7044151, 7045306));
-        Assert.assertFalse(region2.samRecord.getReadNegativeStrandFlag());
-//        Assert.assertEquals(region2.getCigarAlong5to3DirectionOfContig().toString(), "1343S1155M");
-        Assert.assertEquals(region2.samRecord.getMappingQuality(), 60);
-        Assert.assertEquals(AlignmentRegion.startOfAlignmentInContig(region2.samRecord), 1344);
-        Assert.assertEquals(AlignmentRegion.endOfAlignmentInContig(region2.samRecord), 2498);
-        Assert.assertEquals((int) region2.samRecord.getAttribute("NM"), 3);
+        Assert.assertEquals(region2.referenceInterval, new SimpleInterval("1", 7044151, 7045306));
+        Assert.assertTrue(region2.forwardStrand);
+        Assert.assertEquals(region2.cigarAlong5to3DirectionOfContig.toString(), "1343S1155M");
+        Assert.assertEquals(region2.mapQual, 60);
+        Assert.assertEquals(region2.startInAssembledContig, 1344);
+        Assert.assertEquals(region2.endInAssembledContig, 2498);
+        Assert.assertEquals(region2.mismatches, 3);
     }
 }

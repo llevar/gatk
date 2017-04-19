@@ -6,14 +6,13 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFConstants;
 import org.broadinstitute.hellbender.engine.spark.SparkContextFactory;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
 import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import scala.Tuple2;
-import scala.Tuple3;
+import scala.Tuple5;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -115,16 +114,16 @@ public class SVVariantConsensusDiscoveryUnitTest extends BaseTest {
      * Not an exhaustive test on all attributes, only tests:
      * MAPPING_QUALITIES, ALIGNMENT_LENGTH
      */
-    private static void seeIfItWorks_evidenceAnnotation(final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData,
+    private static void seeIfItWorks_evidenceAnnotation(final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData,
                                                         final String[] expectedMappingQualitiesAsStrings,
                                                         final String[] expectedAlignmentLengthsAsStrings) throws IOException {
 
-        final AlignmentRegion region1 = testData._1();
-        final AlignmentRegion region2 = testData._2();
+        final AlignedAssembly.AlignmentInterval region1 = testData._1();
+        final AlignedAssembly.AlignmentInterval region2 = testData._2();
         final byte[] contigSeq = null; // hack, as the contig sequence is really not necessary for this test purpose
 
         final Map<String, Object> attributeMap =
-                SVVariantConsensusDiscovery.getEvidenceRelatedAnnotations(Collections.singletonList(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList())));
+                SVVariantConsensusDiscovery.getEvidenceRelatedAnnotations(Collections.singletonList(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), testData._4(), testData._5())));
 
         Assert.assertEquals(((String)attributeMap.get(GATKSVVCFHeaderLines.MAPPING_QUALITIES)).split(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR),
                             expectedMappingQualitiesAsStrings);
@@ -136,7 +135,7 @@ public class SVVariantConsensusDiscoveryUnitTest extends BaseTest {
     public void testGetEvidenceRelatedAnnotations() throws IOException {
 
         // inversion
-        Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
+        Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
 
         seeIfItWorks_evidenceAnnotation(testData, new String[]{"60"}, new String[]{String.valueOf(1984)});
 
@@ -199,14 +198,14 @@ public class SVVariantConsensusDiscoveryUnitTest extends BaseTest {
     // -----------------------------------------------------------------------------------------------
     // Integrative test
     // -----------------------------------------------------------------------------------------------
-    private static void seeIfItWorks_integrative(final Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData,
+    private static void seeIfItWorks_integrative(final Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData,
                                                  final List<String> expectedAttributeKeys) throws IOException {
 
-        final AlignmentRegion region1 = testData._1();
-        final AlignmentRegion region2 = testData._2();
+        final AlignedAssembly.AlignmentInterval region1 = testData._1();
+        final AlignedAssembly.AlignmentInterval region2 = testData._2();
         final byte[] contigSeq = null; // hack, as the contig sequence is really not necessary for this test purpose
 
-        final Iterable<ChimericAlignment_old> evidence = Collections.singletonList(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList()));
+        final Iterable<ChimericAlignment_old> evidence = Collections.singletonList(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), testData._4(), testData._5()));
 
         final NovelAdjacencyReferenceLocations breakpoints = testData._3();
 
@@ -226,7 +225,7 @@ public class SVVariantConsensusDiscoveryUnitTest extends BaseTest {
                 GATKSVVCFHeaderLines.ALIGN_LENGTHS, GATKSVVCFHeaderLines.MAX_ALIGN_LENGTH, GATKSVVCFHeaderLines.ASSEMBLY_IDS, GATKSVVCFHeaderLines.CONTIG_IDS);
 
         // inversion
-        Tuple3<AlignmentRegion, AlignmentRegion, NovelAdjacencyReferenceLocations> testData = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
+        Tuple5<AlignedAssembly.AlignmentInterval, AlignedAssembly.AlignmentInterval, NovelAdjacencyReferenceLocations, String, String> testData = SVDiscoveryTestDataProvider.forSimpleInversionFromLongCtg1WithStrangeLeftBreakpoint;
 
         seeIfItWorks_integrative(testData, Stream.concat( commonAttributes.stream(),
                 Sets.newHashSet(GATKSVVCFHeaderLines.INV33, GATKSVVCFHeaderLines.HOMOLOGY, GATKSVVCFHeaderLines.HOMOLOGY_LENGTH).stream()).sorted().collect(Collectors.toList()));

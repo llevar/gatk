@@ -7,7 +7,6 @@ import htsjdk.samtools.SAMRecord;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
@@ -22,7 +21,6 @@ import org.broadinstitute.hellbender.engine.filters.ReadFilterLibrary;
 import org.broadinstitute.hellbender.engine.spark.GATKSparkTool;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
 import org.broadinstitute.hellbender.tools.spark.sv.StructuralVariationDiscoveryArgumentCollection;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import scala.Tuple2;
@@ -72,7 +70,8 @@ public final class DiscoverVariantsFromContigAlignmentsSpark extends GATKSparkTo
 
         final SAMFileHeader header = getHeaderForReads();
         final JavaRDD<Iterable<SAMRecord>> parsedContigAlignments
-                = getReads().groupBy(GATKRead::getName).map(Tuple2::_2).map(r -> breakGappedAlignments(r, header));
+                = getReads().groupBy(GATKRead::getName).map(Tuple2::_2)
+                .map(r -> breakGappedAlignments(r, header, SVConstants.DiscoveryStepConstants.GAPPED_ALIGNMENT_BREAK_DEFAULT_SENSITIVITY));
 
         makeSenseAndWrite(parsedContigAlignments, discoverStageArgs.fastaReference, ctx.broadcast(getReference()), getAuthenticatedGCSOptions(),
                 vcfOutputFileName, localLogger);
@@ -84,42 +83,46 @@ public final class DiscoverVariantsFromContigAlignmentsSpark extends GATKSparkTo
 //                vcfOutputFileName, localLogger);
     }
 
-    public static void makeSenseAndWrite(final JavaRDD<Iterable<SAMRecord>> alignmentRegionsIterable,
-                                         final String fastaReference, final Broadcast<ReferenceMultiSource> broadcastReference,
-                                         final PipelineOptions pipelineOptions, String vcfFileName,
-                                         final Logger toolLogger) {
-
-        final JavaRDD<VariantContext> variants
-                = SVVariantConsensusDiscovery.discoverNovelAdjacencyFromChimericAlignments(alignmentRegionsIterable, toolLogger)
-                .map(tuple2 -> SVVariantConsensusDiscovery.discoverVariantsFromConsensus(tuple2, broadcastReference));
-
-        SVVCFWriter.writeVCF(pipelineOptions, vcfFileName, fastaReference, variants, toolLogger);
-    }
-
     /**
-     * Converts an iterable of a {@link GATKRead}'s of a contig, particularly the alignment and sequence information in it
-     * to the custom {@link AlignmentRegion} format.
+     * Iterates through the input {@code reads}, filters out secondary alignment (i.e. records with "XA" tag) and
+     * break the records when the gap in the alignment reaches the specified {@code sensitivity}.
+     * The size of the returned iterable of SAMRecords is NOT guaranteed to be larger than that of the input iterable due to the filtering.
      */
-    @VisibleForTesting
-    static Iterable<SAMRecord> breakGappedAlignments(final Iterable<GATKRead> reads, final SAMFileHeader header) {
+    private static Iterable<SAMRecord> breakGappedAlignments(final Iterable<GATKRead> reads, final SAMFileHeader header, final int sensitivity) {
 
         Utils.validateArg(reads.iterator().hasNext(), "input collection of GATK reads is empty");
 
         return Utils.stream(reads)
                 .filter(r -> !r.isSecondaryAlignment())
-                .map(r -> AlignmentGapBreaker.breakGappedAlignment(r.convertToSAMRecord(header), SVConstants.DiscoveryStepConstants.GAPPED_ALIGNMENT_BREAK_DEFAULT_SENSITIVITY))
+                .map(r -> AlignmentGapBreaker.breakGappedAlignment(r.convertToSAMRecord(header), sensitivity))
                 .flatMap(Utils::stream).collect(Collectors.toList());
     }
 
-    private static void makeSenseAndWrite_old(final JavaPairRDD<Iterable<AlignmentRegion>, byte[]> alignmentRegionsIterable,
-                                              final String fastaReference, final Broadcast<ReferenceMultiSource> broadcastReference,
-                                              final PipelineOptions pipelineOptions, String vcfFileName,
-                                              final Logger toolLogger) {
+    /**
+     * Makes sense out of the alignment records of the locally assembled contigs,
+     * turn into annotated {@link VariantContext}'s, and writes them to VCF.
+     */
+    public static void makeSenseAndWrite(final JavaRDD<Iterable<SAMRecord>> contigAlignments,
+                                         final String fastaReference, final Broadcast<ReferenceMultiSource> broadcastReference,
+                                         final PipelineOptions pipelineOptions, final String vcfFileName,
+                                         final Logger toolLogger) {
 
         final JavaRDD<VariantContext> variants
-                = SVVariantConsensusDiscovery.discoverNovelAdjacencyFromChimericAlignments_old(alignmentRegionsIterable, toolLogger)
+                = SVVariantConsensusDiscovery.discoverNovelAdjacencyFromChimericAlignments(contigAlignments, toolLogger)
                 .map(tuple2 -> SVVariantConsensusDiscovery.discoverVariantsFromConsensus(tuple2, broadcastReference));
 
         SVVCFWriter.writeVCF(pipelineOptions, vcfFileName, fastaReference, variants, toolLogger);
     }
+
+//    private static void makeSenseAndWrite_old(final JavaPairRDD<Iterable<AlignmentRegion>, byte[]> alignmentRegionsIterable,
+//                                              final String fastaReference, final Broadcast<ReferenceMultiSource> broadcastReference,
+//                                              final PipelineOptions pipelineOptions, String vcfFileName,
+//                                              final Logger toolLogger) {
+//
+//        final JavaRDD<VariantContext> variants
+//                = SVVariantConsensusDiscovery.discoverNovelAdjacencyFromChimericAlignments_old(alignmentRegionsIterable, toolLogger)
+//                .map(tuple2 -> SVVariantConsensusDiscovery.discoverVariantsFromConsensus(tuple2, broadcastReference));
+//
+//        SVVCFWriter.writeVCF(pipelineOptions, vcfFileName, fastaReference, variants, toolLogger);
+//    }
 }

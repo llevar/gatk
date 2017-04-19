@@ -9,11 +9,11 @@ import scala.Tuple2;
 
 import java.util.*;
 
-public class ContigAligner {
+class ContigAligner {
 
     private final String indexImageFile;
 
-    public ContigAligner(final String indexImageFile) {
+    ContigAligner(final String indexImageFile) {
         this.indexImageFile = indexImageFile;
     }
 
@@ -26,7 +26,7 @@ public class ContigAligner {
      * @param assemblyId An identifier for the assembly or set of contigs
      * @param contigsCollection The set of all canonical (primary or supplementary) alignments for the contigs.
      */
-    public List<AlignmentRegion> alignContigs(final String assemblyId, final ContigsCollection contigsCollection) {
+    List<AlignmentRegion> alignContigs(final String assemblyId, final ContigsCollection contigsCollection) {
         final List<AlignmentRegion> alignedContigs = new ArrayList<>(contigsCollection.getContents().size());
         final BwaMemIndex index = BwaMemIndexSingleton.getInstance(indexImageFile);
         try ( final BwaMemAligner aligner = new BwaMemAligner(index) ) {
@@ -47,7 +47,7 @@ public class ContigAligner {
                         .filter(a -> (a.getSamFlag()&SAMFlag.NOT_PRIMARY_ALIGNMENT.intValue())==0)
                         .filter(a -> (a.getSamFlag()&SAMFlag.READ_UNMAPPED.intValue())==0)
                         .map(a -> new AlignmentRegion(assemblyId, contigId, contigLen, a, refNames))
-                        .sorted(Comparator.comparing(a -> AlignmentRegion.startOfAlignmentInContig(a.samRecord)))
+                        .sorted(Comparator.comparing(a -> a.startInAssembledContig))
                         .forEach(alignedContigs::add);
             }
         }

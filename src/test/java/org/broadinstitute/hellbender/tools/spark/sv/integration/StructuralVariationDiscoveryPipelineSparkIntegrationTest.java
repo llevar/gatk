@@ -66,7 +66,7 @@ public class StructuralVariationDiscoveryPipelineSparkIntegrationTest extends Co
         return tests.toArray(new Object[][]{});
     }
 
-    @Test(dataProvider = "svDiscoverPipelineSparkIntegrationTest", groups = "sv")
+    @Test(dataProvider = "svDiscoverPipelineSparkIntegrationTest", groups = "sv", enabled = false)
     public void testSVDiscoverPipelineRunnableLocal(final StructuralVariationDiscoveryPipelineSparkIntegrationTest.StructuralVariationDiscoveryPipelineSparkIntegrationTestArgs params) throws IOException {
         new IntegrationTestSpec(
                 new ArgumentsBuilder().add(params.getCommandLineNoApiKey()).getString(),
@@ -74,7 +74,7 @@ public class StructuralVariationDiscoveryPipelineSparkIntegrationTest extends Co
                 .executeTest("testSVDiscoverPipelineRunnableLocal-", this);
     }
 
-    @Test(dataProvider = "svDiscoverPipelineSparkIntegrationTest", groups = "sv")
+    @Test(dataProvider = "svDiscoverPipelineSparkIntegrationTest", groups = "sv", enabled = false)
     public void testSVDiscoverPipelineRunnableMiniCluster(final StructuralVariationDiscoveryPipelineSparkIntegrationTest.StructuralVariationDiscoveryPipelineSparkIntegrationTestArgs params) throws IOException {
 
     }

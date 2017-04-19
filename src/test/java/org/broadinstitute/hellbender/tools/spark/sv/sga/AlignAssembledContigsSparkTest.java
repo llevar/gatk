@@ -1,6 +1,5 @@
 package org.broadinstitute.hellbender.tools.spark.sv.sga;
 
-import org.broadinstitute.hellbender.tools.spark.sv.sga.ContigsCollection;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;

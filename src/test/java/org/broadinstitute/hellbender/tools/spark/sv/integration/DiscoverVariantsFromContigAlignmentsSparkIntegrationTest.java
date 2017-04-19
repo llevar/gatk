@@ -46,7 +46,7 @@ public class DiscoverVariantsFromContigAlignmentsSparkIntegrationTest extends Co
         return tests.toArray(new Object[][]{});
     }
 
-    @Test(dataProvider = "discoverVariantsFromContigAlignmentsSparkIntegrationTest", groups = "sv")
+    @Test(dataProvider = "discoverVariantsFromContigAlignmentsSparkIntegrationTest", groups = "sv", enabled = false)
     public void testDiscoverVariantsRunnableLocal(final DiscoverVariantsFromContigAlignmentsSparkIntegrationTest.DiscoverVariantsFromContigAlignmentsSparkIntegrationTestArgs params) throws IOException {
         new IntegrationTestSpec(
                 new ArgumentsBuilder().add(params.getCommandLineNoApiKey()).getString(),
@@ -54,7 +54,7 @@ public class DiscoverVariantsFromContigAlignmentsSparkIntegrationTest extends Co
                 .executeTest("testDiscoverVariantsRunnableLocal-", this);
     }
 
-    @Test(dataProvider = "discoverVariantsFromContigAlignmentsSparkIntegrationTest", groups = "sv")
+    @Test(dataProvider = "discoverVariantsFromContigAlignmentsSparkIntegrationTest", groups = "sv", enabled = false)
     public void testDiscoverVariantsRunnableMiniCluster(final DiscoverVariantsFromContigAlignmentsSparkIntegrationTest.DiscoverVariantsFromContigAlignmentsSparkIntegrationTestArgs params) throws Exception {
 
         MiniClusterUtils.runOnIsolatedMiniCluster(cluster -> {

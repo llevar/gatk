@@ -38,7 +38,7 @@ public class NovelAdjacencyReferenceLocations {
         FIVE_TO_THREE, THREE_TO_THREE, FIVE_TO_FIVE
     }
 
-    NovelAdjacencyReferenceLocations(final ChimericAlignment_old chimericAlignmentOld)
+    public NovelAdjacencyReferenceLocations(final ChimericAlignment_old chimericAlignmentOld)
             throws IOException {
 
         // first get endConnectionType, then get complications, finally use complications to justify breakpoints
@@ -54,10 +54,10 @@ public class NovelAdjacencyReferenceLocations {
     // TODO: 12/12/16 again, does not work for translocation
     @VisibleForTesting
     static EndConnectionType determineEndConnectionType(final ChimericAlignment_old chimericAlignmentOld) {
-        if (chimericAlignmentOld.regionWithLowerCoordOnContig.samRecord.getReadNegativeStrandFlag() == chimericAlignmentOld.regionWithHigherCoordOnContig.samRecord.getReadNegativeStrandFlag()) {
+        if (chimericAlignmentOld.regionWithLowerCoordOnContig.forwardStrand == chimericAlignmentOld.regionWithHigherCoordOnContig.forwardStrand) {
             return FIVE_TO_THREE;
         } else {
-            return chimericAlignmentOld.regionWithLowerCoordOnContig.samRecord.getReadNegativeStrandFlag() ? THREE_TO_THREE : FIVE_TO_FIVE;
+            return chimericAlignmentOld.regionWithLowerCoordOnContig.forwardStrand ? FIVE_TO_FIVE : THREE_TO_THREE;
         }
     }
 
@@ -75,14 +75,14 @@ public class NovelAdjacencyReferenceLocations {
         final String leftBreakpointRefContig, rightBreakpointRefContig;
         final int leftBreakpointCoord, rightBreakpointCoord;
         if (complication.hasDuplicationAnnotation()) { // todo : development artifact-- assuming tandem duplication is not co-existing with inversion
-            leftBreakpointRefContig = rightBreakpointRefContig = ca.regionWithLowerCoordOnContig.samRecord.getContig();
+            leftBreakpointRefContig = rightBreakpointRefContig = ca.regionWithLowerCoordOnContig.referenceInterval.getContig();
             final SimpleInterval leftReferenceInterval, rightReferenceInterval;
             if (ca.isForwardStrandRepresentation) {
-                leftReferenceInterval = new SimpleInterval(ca.regionWithLowerCoordOnContig.samRecord);
-                rightReferenceInterval = new SimpleInterval(ca.regionWithHigherCoordOnContig.samRecord);
+                leftReferenceInterval = ca.regionWithLowerCoordOnContig.referenceInterval;
+                rightReferenceInterval = ca.regionWithHigherCoordOnContig.referenceInterval;
             } else {
-                leftReferenceInterval = new SimpleInterval(ca.regionWithHigherCoordOnContig.samRecord);
-                rightReferenceInterval = new SimpleInterval(ca.regionWithLowerCoordOnContig.samRecord);
+                leftReferenceInterval = ca.regionWithHigherCoordOnContig.referenceInterval;
+                rightReferenceInterval = ca.regionWithLowerCoordOnContig.referenceInterval;
             }
             if (complication.getDupSeqRepeatNumOnCtg() > complication.getDupSeqRepeatNumOnRef()) {
                 leftBreakpointCoord = leftReferenceInterval.getEnd() - homologyLen - (complication.getDupSeqRepeatNumOnCtg() - complication.getDupSeqRepeatNumOnRef())*complication.getDupSeqRepeatUnitRefSpan().size();
@@ -93,11 +93,11 @@ public class NovelAdjacencyReferenceLocations {
         } else { // inversion and simple deletion & insertion
             final SimpleInterval leftReferenceInterval, rightReferenceInterval;
             if (ca.isForwardStrandRepresentation) {
-                leftReferenceInterval  = new SimpleInterval(ca.regionWithLowerCoordOnContig.samRecord);
-                rightReferenceInterval = new SimpleInterval(ca.regionWithHigherCoordOnContig.samRecord);
+                leftReferenceInterval  = ca.regionWithLowerCoordOnContig.referenceInterval;
+                rightReferenceInterval = ca.regionWithHigherCoordOnContig.referenceInterval;
             } else {
-                leftReferenceInterval  = new SimpleInterval(ca.regionWithHigherCoordOnContig.samRecord);
-                rightReferenceInterval =new SimpleInterval( ca.regionWithLowerCoordOnContig.samRecord);
+                leftReferenceInterval  = ca.regionWithHigherCoordOnContig.referenceInterval;
+                rightReferenceInterval = ca.regionWithLowerCoordOnContig.referenceInterval;
             }
             leftBreakpointRefContig  = leftReferenceInterval.getContig();
             rightBreakpointRefContig = rightReferenceInterval.getContig();

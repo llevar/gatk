@@ -16,7 +16,7 @@ import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.engine.spark.GATKSparkTool;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
 import org.broadinstitute.hellbender.tools.spark.sv.StructuralVariationDiscoveryArgumentCollection;
-import org.broadinstitute.hellbender.tools.spark.sv.discovery.AlignmentGapBreaker;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.NovelAdjacencyReferenceLocations;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.SVVCFWriter;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.SVVariantConsensusDiscovery;
 import scala.Tuple2;
@@ -81,7 +81,7 @@ public final class DiscoverVariantsFromAlignedSGAContigsSpark extends GATKSparkT
         final Broadcast<ReferenceMultiSource> broadcastReference = ctx.broadcast(getReference());
 
         final JavaRDD<VariantContext> variants
-                = SVVariantConsensusDiscovery.discoverNovelAdjacencyFromChimericAlignments_old(alignmentRegionsWithContigSequences, log)
+                = discoverNovelAdjacencyFromChimericAlignments_old(alignmentRegionsWithContigSequences, log)
                 .map(tuple2 -> SVVariantConsensusDiscovery.discoverVariantsFromConsensus(tuple2, broadcastReference));
 
         SVVCFWriter.writeVCF(getAuthenticatedGCSOptions(), outputName, fastaReference, variants, log);
@@ -118,10 +118,11 @@ public final class DiscoverVariantsFromAlignedSGAContigsSpark extends GATKSparkT
     private static JavaPairRDD<Tuple2<String, String>, Iterable<AlignmentRegion>> parseAlignments(final JavaSparkContext ctx,
                                                                                                   final String pathToInputAlignments) {
 
-        return ctx.textFile(pathToInputAlignments).map(textLine -> AlignmentRegion.fromString(textLine.split(AlignmentRegion.STRING_REP_SEPARATOR,-1)))
-                .flatMap(oneRegion -> AlignmentGapBreaker.breakGappedAlignment(oneRegion, SVConstants.DiscoveryStepConstants.GAPPED_ALIGNMENT_BREAK_DEFAULT_SENSITIVITY).iterator())
-                .mapToPair(alignmentRegion -> new Tuple2<>(new Tuple2<>(alignmentRegion.assemblyId, alignmentRegion.contigId), alignmentRegion))
-                .groupByKey();
+//        return ctx.textFile(pathToInputAlignments).map(textLine -> AlignmentRegion.fromString(textLine.split(AlignmentRegion.STRING_REP_SEPARATOR,-1)))
+//                .flatMap(oneRegion -> AssemblyAlignmentParser.breakGappedAlignment(oneRegion, SVConstants.DiscoveryStepConstants.GAPPED_ALIGNMENT_BREAK_DEFAULT_SENSITIVITY, ).iterator())
+//                .mapToPair(alignmentRegion -> new Tuple2<>(new Tuple2<>(alignmentRegion.assemblyId, alignmentRegion.contigId), alignmentRegion))
+//                .groupByKey();
+        return null;
     }
 
     // TODO: 12/15/16 test
@@ -137,6 +138,27 @@ public final class DiscoverVariantsFromAlignedSGAContigsSpark extends GATKSparkT
                 });
     }
 
+    /**
+     * This method processes an RDD containing alignment regions, scanning for chimeric alignments which match a set of filtering
+     * criteria, and emitting novel adjacency not present on the reference used for aligning the contigs.
+     *
+     * The input RDD is of the form:
+     * Tuple2 of:
+     *     {@code Iterable<AlignmentRegion>} AlignmentRegion objects representing all alignments for one contig
+     *     A byte array with the sequence content of the contig
+     * @param alignmentRegionsWithContigSequence A data structure as described above, where a list of AlignmentRegions and the sequence of the contig are keyed by a tuple of Assembly ID and Contig ID
+     * @param logger                             for logging information and accredit to the calling tool
+     */
+    private static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment_old>> discoverNovelAdjacencyFromChimericAlignments_old(
+            final JavaPairRDD<Iterable<AlignmentRegion>, byte[]> alignmentRegionsWithContigSequence,
+            final Logger logger)
+    {
+//        return alignmentRegionsWithContigSequence.filter(pair -> Iterables.size(pair._1())>1) // filter out any contigs that has less than two alignment records
+//                .flatMap( input -> ChimericAlignment_old.fromSplitAlignments_old(input).iterator())              // 1. AR -> {CA}
+//                .mapToPair(ca -> new Tuple2<>(new NovelAdjacencyReferenceLocations(ca), ca))             // 2. CA -> NovelAdjacency
+//                .groupByKey();                                                                           // 3. {consensus NovelAdjacency}
+        return null;
+    }
 
     private static void debugStats(final JavaPairRDD<Tuple2<String, String>, Iterable<AlignmentRegion>> alignmentRegionsWithContigSequences, final String outPrefix) {
         log.info(alignmentRegionsWithContigSequences.count() + " contigs");
@@ -148,14 +170,14 @@ public final class DiscoverVariantsFromAlignedSGAContigsSpark extends GATKSparkT
         final JavaPairRDD<String, List<Tuple2<Integer, Integer>>> x = alignmentRegionsWithContigSequences.filter(tuple2 -> Iterables.size(tuple2._2())==2).mapToPair(tuple2 -> {
             final Iterator<AlignmentRegion> it = tuple2._2().iterator();
             final AlignmentRegion region1 = it.next(), region2 = it.next();
-            return new Tuple2<>(region1.assemblyId+":"+region1.contigId, Arrays.asList(new Tuple2<>(region1.samRecord.getMappingQuality(), region1.samRecord.getAlignmentEnd()-region1.samRecord.getAlignmentStart()+1), new Tuple2<>(region2.samRecord.getMappingQuality(), region2.samRecord.getAlignmentEnd()-region2.samRecord.getAlignmentStart()+1)));
+            return new Tuple2<>(region1.assemblyId+":"+region1.contigId, Arrays.asList(new Tuple2<>(region1.mapQual, region1.referenceInterval.size()), new Tuple2<>(region2.mapQual, region2.referenceInterval.size())));
         });
         x.coalesce(1).saveAsTextFile(outPrefix+"_withTwoAlignments");
         log.info(x.count() + " contigs have two alignments");
 
         final JavaPairRDD<String, List<Tuple2<Integer, Integer>>> y = alignmentRegionsWithContigSequences.filter(tuple2 -> Iterables.size(tuple2._2())>2).mapToPair(tuple2 -> {
             final AlignmentRegion region1 = tuple2._2().iterator().next();
-            return new Tuple2<>(region1.assemblyId+":"+region1.contigId, StreamSupport.stream(tuple2._2().spliterator(), false).map(ar -> new Tuple2<>(ar.samRecord.getMappingQuality(), ar.samRecord.getAlignmentEnd()-ar.samRecord.getAlignmentStart()+1)).collect(Collectors.toList()));
+            return new Tuple2<>(region1.assemblyId+":"+region1.contigId, StreamSupport.stream(tuple2._2().spliterator(), false).map(ar -> new Tuple2<>(ar.mapQual, ar.referenceInterval.size())).collect(Collectors.toList()));
         });
         y.coalesce(1).saveAsTextFile(outPrefix+"_withMoreThanTwoAlignments");
         log.info(y.count() + " contigs have more than two alignments");

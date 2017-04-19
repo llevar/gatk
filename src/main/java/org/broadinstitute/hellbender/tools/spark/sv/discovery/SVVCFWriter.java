@@ -34,7 +34,7 @@ public class SVVCFWriter {
      * FASTA and Broadcast references are both required because 2bit Broadcast references currently order their
      * sequence dictionaries in a scrambled order, see https://github.com/broadinstitute/gatk/issues/2037.
      */
-    public static void writeVCF(final PipelineOptions pipelineOptions, String vcfFileName,
+    public static void writeVCF(final PipelineOptions pipelineOptions, final String vcfFileName,
                                 final String fastaReference, final JavaRDD<VariantContext> variantContexts,
                                 final Logger logger) {
 
