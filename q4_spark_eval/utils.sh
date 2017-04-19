@@ -11,6 +11,7 @@ time_gatk() {
     --sparkRunner SPARK --sparkMaster yarn-client --sparkSubmitCommand spark2-submit \
     --num-executors $NUM_EXECUTORS --executor-cores $EXECUTOR_CORES --executor-memory $EXECUTOR_MEMORY \
     --driver-memory $DRIVER_MEMORY \
+    --conf spark.dynamicAllocation.enabled=false \
   > $LOG 2>&1
   RC=$?
   DURATION_MINS=$(grep 'Elapsed time' $LOG | grep -Eow "[0-9]+\.[0-9][0-9]")
