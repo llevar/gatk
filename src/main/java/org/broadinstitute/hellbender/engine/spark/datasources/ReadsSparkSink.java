@@ -298,8 +298,10 @@ public final class ReadsSparkSink {
 
         if (!IOUtils.isCramFileName(outputName)) { // only set the reference for CRAM output
             conf.unset(CRAMInputFormat.REFERENCE_SOURCE_PATH_PROPERTY);
-            if (IOUtils.isBamFileName(outputName)) {
+            if (format == ReadsWriteFormat.SINGLE && IOUtils.isBamFileName(outputName)) {
                 conf.setBoolean(BAMOutputFormat.WRITE_SPLITTING_BAI, true);
+            } else {
+                conf.setBoolean(BAMOutputFormat.WRITE_SPLITTING_BAI, false);
             }
         }
         else {
