@@ -66,6 +66,10 @@ public class ShuffleJoinReadsWithVariants {
     public static JavaPairRDD<GATKRead, Iterable<GATKVariant>> join(
             final JavaRDD<GATKRead> reads, final JavaRDD<GATKVariant> variants) {
 
+        // increase number of partitions to ameliortate huge partition size due to skew
+        float factor = 1.5f;
+        int newNumPartitions = (int) (reads.getNumPartitions() * factor);
+
         JavaPairRDD<VariantShard, GATKRead> readsWShards = pairReadsWithVariantShards(reads);
 
         JavaPairRDD<VariantShard, GATKVariant> variantsWShards = pairVariantsWithVariantShards(variants);
@@ -75,7 +79,7 @@ public class ShuffleJoinReadsWithVariants {
 
         // we group together all variants for each unique GATKRead.  As we combine through the Variants, they are added
         // to a HashSet that get continually merged together
-        return allPairs.aggregateByKey(new LinkedHashSet<>(), (vs, v) -> {
+        return allPairs.aggregateByKey(new LinkedHashSet<>(), newNumPartitions, (vs, v) -> {
             if (v != null) { // pairReadsWithVariants can produce null variant
                 ((Set<GATKVariant>) vs).add(v);
             }
