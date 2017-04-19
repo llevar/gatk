@@ -83,7 +83,7 @@ public class BQSRPipelineSparkIntegrationTest extends CommandLineProgramTest {
                 {new BQSRTest(b37_reference_20_21 , hiSeqBam_20_21_100000, more20Sites, ".bam", "-indelBQSR -enableBAQ " +"--joinStrategy SHUFFLE -knownSites " + more21Sites, getResourceDir() + "expected.MultiSite.bqsr.pipeline.bam")},
                 {new BQSRTest(b37_reference_20_21 , hiSeqCram_20_21_100000, more20Sites, ".cram", "-indelBQSR -enableBAQ " +"--joinStrategy SHUFFLE -knownSites " + more21Sites, getResourceDir() + "expected.MultiSite.bqsr.pipeline.cram")},
                 {new BQSRTest(b37_2bit_reference_20_21 , hiSeqBam_20_21_100000, more20Sites, ".bam", "-indelBQSR -enableBAQ " +"--joinStrategy BROADCAST -knownSites " + more21Sites, getResourceDir() + "expected.MultiSite.bqsr.pipeline.bam")},
-                {new BQSRTest(b37_reference_20_21 , hiSeqBam_20_21_100000, more20Sites, ".bam", "-indelBQSR -enableBAQ " +"--joinStrategy OVERLAPS_PARTITIONER -knownSites " + more21Sites, getResourceDir() + "expected.MultiSite.bqsr.pipeline.bam")},
+//                {new BQSRTest(b37_reference_20_21 , hiSeqBam_20_21_100000, more20Sites, ".bam", "-indelBQSR -enableBAQ " +"--joinStrategy OVERLAPS_PARTITIONER -knownSites " + more21Sites, getResourceDir() + "expected.MultiSite.bqsr.pipeline.bam")},
        };
     }
 
