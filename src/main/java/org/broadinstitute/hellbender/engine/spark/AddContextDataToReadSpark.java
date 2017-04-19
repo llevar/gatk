@@ -108,13 +108,13 @@ public class AddContextDataToReadSpark {
 //        final IntervalsSkipList<GATKVariant> variantSkipList = new IntervalsSkipList<>(variants.collect());
 //        final Broadcast<IntervalsSkipList<GATKVariant>> variantsBroadcast = ctx.broadcast(variantSkipList);
 
-        mappedReads.mapPartitions((FlatMapFunction<Iterator<GATKRead>, GATKRead>) iterator -> {
+        final JavaRDD<GATKRead> reads = mappedReads.mapPartitions((FlatMapFunction<Iterator<GATKRead>, GATKRead>) iterator -> {
             VariantsSingleton.getInstance(variantsPath); // initialize for each executor
             return iterator;
         });
 
         int maxLocatableSize = Math.min(shardSize, shardPadding);
-        JavaRDD<Shard<GATKRead>> shardedReads = SparkSharder.shard(ctx, mappedReads, GATKRead.class, sequenceDictionary, intervalShards, maxLocatableSize);
+        JavaRDD<Shard<GATKRead>> shardedReads = SparkSharder.shard(ctx, reads, GATKRead.class, sequenceDictionary, intervalShards, maxLocatableSize);
         return shardedReads.flatMapToPair(new PairFlatMapFunction<Shard<GATKRead>, GATKRead, ReadContextData>() {
             private static final long serialVersionUID = 1L;
             @Override
