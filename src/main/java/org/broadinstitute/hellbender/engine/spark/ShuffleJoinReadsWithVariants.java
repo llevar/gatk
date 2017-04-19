@@ -66,10 +66,6 @@ public class ShuffleJoinReadsWithVariants {
     public static JavaPairRDD<GATKRead, Iterable<GATKVariant>> join(
             final JavaRDD<GATKRead> reads, final JavaRDD<GATKVariant> variants) {
 
-        // increase number of partitions to ameliortate huge partition size due to skew
-        float factor = 1.5f;
-        int newNumPartitions = (int) (reads.getNumPartitions() * factor);
-
         JavaPairRDD<VariantShard, GATKRead> readsWShards = pairReadsWithVariantShards(reads);
 
         JavaPairRDD<VariantShard, GATKVariant> variantsWShards = pairVariantsWithVariantShards(variants);
@@ -79,7 +75,7 @@ public class ShuffleJoinReadsWithVariants {
 
         // we group together all variants for each unique GATKRead.  As we combine through the Variants, they are added
         // to a HashSet that get continually merged together
-        return allPairs.aggregateByKey(new LinkedHashSet<>(), newNumPartitions, (vs, v) -> {
+        return allPairs.aggregateByKey(new LinkedHashSet<>(), (vs, v) -> {
             if (v != null) { // pairReadsWithVariants can produce null variant
                 ((Set<GATKVariant>) vs).add(v);
             }
@@ -113,7 +109,12 @@ public class ShuffleJoinReadsWithVariants {
     }
     private static JavaPairRDD<GATKRead, GATKVariant> pairReadsWithVariants(final JavaPairRDD<VariantShard, GATKRead> readsWShards,
                                                                             final  JavaPairRDD<VariantShard, GATKVariant> variantsWShards) {
-        JavaPairRDD<VariantShard, Tuple2<Iterable<GATKRead>, Iterable<GATKVariant>>> cogroup = readsWShards.cogroup(variantsWShards);
+
+        // increase number of partitions to ameliorate huge partition size due to skew
+        float factor = 1.5f;
+        int newNumPartitions = (int) (readsWShards.getNumPartitions() * factor);
+
+        JavaPairRDD<VariantShard, Tuple2<Iterable<GATKRead>, Iterable<GATKVariant>>> cogroup = readsWShards.cogroup(variantsWShards, newNumPartitions);
 
         return cogroup.flatMapToPair(cogroupValue -> {
             Iterable<GATKRead> iReads = cogroupValue._2()._1();
