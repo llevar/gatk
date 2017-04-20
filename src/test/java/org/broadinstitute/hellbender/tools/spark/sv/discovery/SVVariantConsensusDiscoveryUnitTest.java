@@ -6,7 +6,6 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFConstants;
 import org.broadinstitute.hellbender.engine.spark.SparkContextFactory;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -123,7 +122,7 @@ public class SVVariantConsensusDiscoveryUnitTest extends BaseTest {
         final byte[] contigSeq = null; // hack, as the contig sequence is really not necessary for this test purpose
 
         final Map<String, Object> attributeMap =
-                SVVariantConsensusDiscovery.getEvidenceRelatedAnnotations(Collections.singletonList(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), testData._4(), testData._5())));
+                SVVariantConsensusDiscovery.getEvidenceRelatedAnnotations(Collections.singletonList(new ChimericAlignment(region1, region2, contigSeq, Collections.emptyList(), testData._4(), testData._5())));
 
         Assert.assertEquals(((String)attributeMap.get(GATKSVVCFHeaderLines.MAPPING_QUALITIES)).split(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR),
                             expectedMappingQualitiesAsStrings);
@@ -205,7 +204,7 @@ public class SVVariantConsensusDiscoveryUnitTest extends BaseTest {
         final AlignedAssembly.AlignmentInterval region2 = testData._2();
         final byte[] contigSeq = null; // hack, as the contig sequence is really not necessary for this test purpose
 
-        final Iterable<ChimericAlignment_old> evidence = Collections.singletonList(new ChimericAlignment_old(region1, region2, contigSeq, Collections.emptyList(), testData._4(), testData._5()));
+        final Iterable<ChimericAlignment> evidence = Collections.singletonList(new ChimericAlignment(region1, region2, contigSeq, Collections.emptyList(), testData._4(), testData._5()));
 
         final NovelAdjacencyReferenceLocations breakpoints = testData._3();
 

@@ -7,13 +7,9 @@ import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.AlignedAssembly;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.AlignmentGapBreaker;
-import org.broadinstitute.hellbender.tools.spark.sv.evidence.AlignedAssemblyOrExcuse;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.SVVariantDiscoveryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
-import org.broadinstitute.hellbender.utils.bwa.BwaMemAlignment;
-import org.broadinstitute.hellbender.utils.bwa.BwaMemAlignmentUtils;
-import org.broadinstitute.hellbender.utils.fermi.FermiLiteAssembly;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import scala.Tuple2;
 
@@ -22,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Implements a parser for parsing alignments of locally assembled contigs.
@@ -32,20 +27,12 @@ class AssemblyAlignmentParser implements Serializable {
 
     /**
      * Converts an iterable of a {@link GATKRead}'s of a contig, particularly the alignment and sequence information in it
-     * to the custom {@link AlignmentRegion} format.
+     * to the custom {@link AlignedAssembly.AlignmentInterval} format.
      */
     @VisibleForTesting
     static Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]> convertToAlignmentRegions(final Iterable<GATKRead> reads, final SAMFileHeader header, final int unClippedContigLength) {
+
         Utils.validateArg(reads.iterator().hasNext(), "input collection of GATK reads is empty");
-
-        final GATKRead primaryAlignment = Utils.stream(reads).filter(r -> !(r.isSecondaryAlignment() || r.isSupplementaryAlignment()))
-                .findFirst()
-                .orElseThrow(() -> new GATKException("no primary alignment for read " + reads.iterator().next().getName()));
-
-        final byte[] bases = primaryAlignment.getBases();
-        if (primaryAlignment.isReverseStrand()) {
-            SequenceUtil.reverseComplement(bases);
-        }
 
         final Iterable<AlignedAssembly.AlignmentInterval> alignmentRegionIterable
                 = Utils.stream(reads)
@@ -55,64 +42,16 @@ class AssemblyAlignmentParser implements Serializable {
                 .map(ar -> breakGappedAlignment(ar, SVConstants.DiscoveryStepConstants.GAPPED_ALIGNMENT_BREAK_DEFAULT_SENSITIVITY, unClippedContigLength))
                 .flatMap(Utils::stream).collect(Collectors.toList());
 
+        final GATKRead primaryAlignment = Utils.stream(reads).filter(r -> !(r.isSecondaryAlignment() || r.isSupplementaryAlignment()))
+                .findFirst()
+                .orElseThrow(() -> new GATKException("no primary alignment for read " + reads.iterator().next().getName()));
+        final byte[] bases = primaryAlignment.getBases();
+        if (primaryAlignment.isReverseStrand()) {
+            SequenceUtil.reverseComplement(bases);
+        }
+
         return new Tuple2<>(alignmentRegionIterable, bases);
     }
-
-//    /**
-//     * Filter out "failed" assemblies and turn the alignments of contigs into custom {@link AlignmentRegion} format.
-//     */
-//    @VisibleForTesting
-//    static List<Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]>> formatToAlignmentRegions(final Iterable<AlignedAssemblyOrExcuse> alignedAssemblyOrExcuseIterable,
-//                                                                                    final List<String> refNames) {
-//
-//        return Utils.stream(alignedAssemblyOrExcuseIterable)
-//                .filter(alignedAssemblyOrExcuse -> alignedAssemblyOrExcuse.getErrorMessage() == null)
-//                .map(alignedAssembly -> forEachAssemblyNotExcuse(alignedAssembly, refNames))
-//                .flatMap(Utils::stream)                         // size == total # of contigs' from all successful assemblies
-//                .filter(pair -> pair._1.iterator().hasNext())   // filter out unmapped and contigs without primary alignments
-//                .collect(Collectors.toList());
-//    }
-//
-//    /**
-//     * Work on "successful" assembly and turn its contigs' alignments to custom {@link AlignmentRegion} format.
-//     */
-//    @VisibleForTesting
-//    static Iterable<Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]>> forEachAssemblyNotExcuse(final AlignedAssemblyOrExcuse alignedAssembly,
-//                                                                                        final List<String> refNames) {
-//
-//        final FermiLiteAssembly assembly = alignedAssembly.getAssembly();
-//
-//        final String assemblyIdString = AlignedAssemblyOrExcuse.formatAssemblyID(alignedAssembly.getAssemblyId());
-//
-//        final List<List<BwaMemAlignment>> allAlignments = alignedAssembly.getContigAlignments();
-//
-//        final List<Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]>> result = new ArrayList<>(allAlignments.size());
-//
-//        IntStream.range(0, assembly.getNContigs())
-//                .forEach( contigIdx -> {
-//                    final byte[] contigSequence = assembly.getContig(contigIdx).getSequence();
-//                    final Iterable<AlignedAssembly.AlignmentInterval> arOfAContig = convertToAlignmentRegions(assemblyIdString, AlignedAssemblyOrExcuse.formatContigID(contigIdx), refNames, allAlignments.get(contigIdx), contigSequence.length);
-//                    result.add(new Tuple2<>(arOfAContig, contigSequence));
-//                } );
-//
-//        return result;
-//    }
-//
-//    /**
-//     * Converts alignment records of the contig pointed to by {@code contigIdx} in a {@link FermiLiteAssembly} to custom {@link AlignmentRegion} format.
-//     */
-//    @VisibleForTesting
-//    private static Iterable<AlignedAssembly.AlignmentInterval> convertToAlignmentRegions(final String assemblyIdString, final String contigIdString, final List<String> refNames,
-//                                                                       final List<BwaMemAlignment> contigAlignments, final int unClippedContigLength) {
-//
-//        return contigAlignments.stream()
-//                .filter( bwaMemAlignment ->  bwaMemAlignment.getRefId() >= 0 && SAMFlag.NOT_PRIMARY_ALIGNMENT.isUnset(bwaMemAlignment.getSamFlag())) // mapped and not XA (i.e. not secondary)
-//                .map(bwaMemAlignment -> BwaMemAlignmentUtils.applyAlignment(assemblyIdString+":"+contigIdString, ))
-//                .map(AlignedAssembly.AlignmentInterval::new)
-//                /*.map(bwaMemAlignment -> new AlignmentRegion(assemblyIdString, contigIdString, unClippedContigLength, bwaMemAlignment, refNames))*/
-//                .map(ar -> breakGappedAlignment(ar, SVConstants.DiscoveryStepConstants.GAPPED_ALIGNMENT_BREAK_DEFAULT_SENSITIVITY, unClippedContigLength))
-//                .flatMap(Utils::stream).collect(Collectors.toList());
-//    }
 
     /**
      * See documentation in {@link AlignmentGapBreaker}
@@ -174,7 +113,6 @@ class AssemblyAlignmentParser implements Serializable {
                     }
                     final Cigar cigarForNewAlignmentRegion = new Cigar(cigarMemoryList);
 
-//                    final AlignedAssembly.AlignmentInterval split = new AlignmentRegion(oneRegion.assemblyId, oneRegion.contigId, referenceInterval, cigarForNewAlignmentRegion, oneRegion.forwardStrand, originalMapQ, SVConstants.DiscoveryStepConstants.ARTIFICIAL_MISMATCH, contigIntervalStart, contigIntervalEnd);
                     final AlignedAssembly.AlignmentInterval split = new AlignedAssembly.AlignmentInterval(referenceInterval, contigIntervalStart, contigIntervalEnd, cigarForNewAlignmentRegion, oneRegion.forwardStrand, originalMapQ, SVConstants.DiscoveryStepConstants.ARTIFICIAL_MISMATCH);
 
                     result.add(split);
@@ -210,9 +148,6 @@ class AssemblyAlignmentParser implements Serializable {
 
         final Cigar lastForwardStrandCigar = new Cigar(cigarMemoryList);
         int clippedNBasesFromEnd = SVVariantDiscoveryUtils.getNumClippedBases(false, cigarElements);
-//        result.add(new AlignmentRegion(oneRegion.assemblyId, oneRegion.contigId, lastReferenceInterval, lastForwardStrandCigar,
-//                oneRegion.forwardStrand, originalMapQ, SVConstants.DiscoveryStepConstants.ARTIFICIAL_MISMATCH,
-//                contigIntervalStart, unclippedContigLen-clippedNBasesFromEnd));
         result.add(new AlignedAssembly.AlignmentInterval(lastReferenceInterval,
                 contigIntervalStart, unclippedContigLen-clippedNBasesFromEnd, lastForwardStrandCigar,
                 oneRegion.forwardStrand, originalMapQ, SVConstants.DiscoveryStepConstants.ARTIFICIAL_MISMATCH));
@@ -220,4 +155,61 @@ class AssemblyAlignmentParser implements Serializable {
 
         return result;
     }
+
+//    /**
+//     * Filter out "failed" assemblies and turn the alignments of contigs into custom {@link AlignmentRegion} format.
+//     */
+//    @VisibleForTesting
+//    static List<Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]>> formatToAlignmentRegions(final Iterable<AlignedAssemblyOrExcuse> alignedAssemblyOrExcuseIterable,
+//                                                                                    final List<String> refNames) {
+//
+//        return Utils.stream(alignedAssemblyOrExcuseIterable)
+//                .filter(alignedAssemblyOrExcuse -> alignedAssemblyOrExcuse.getErrorMessage() == null)
+//                .map(alignedAssembly -> forEachAssemblyNotExcuse(alignedAssembly, refNames))
+//                .flatMap(Utils::stream)                         // size == total # of contigs' from all successful assemblies
+//                .filter(pair -> pair._1.iterator().hasNext())   // filter out unmapped and contigs without primary alignments
+//                .collect(Collectors.toList());
+//    }
+//
+//    /**
+//     * Work on "successful" assembly and turn its contigs' alignments to custom {@link AlignmentRegion} format.
+//     */
+//    @VisibleForTesting
+//    static Iterable<Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]>> forEachAssemblyNotExcuse(final AlignedAssemblyOrExcuse alignedAssembly,
+//                                                                                        final List<String> refNames) {
+//
+//        final FermiLiteAssembly assembly = alignedAssembly.getAssembly();
+//
+//        final String assemblyIdString = AlignedAssemblyOrExcuse.formatAssemblyID(alignedAssembly.getAssemblyId());
+//
+//        final List<List<BwaMemAlignment>> allAlignments = alignedAssembly.getContigAlignments();
+//
+//        final List<Tuple2<Iterable<AlignedAssembly.AlignmentInterval>, byte[]>> result = new ArrayList<>(allAlignments.size());
+//
+//        IntStream.range(0, assembly.getNContigs())
+//                .forEach( contigIdx -> {
+//                    final byte[] contigSequence = assembly.getContig(contigIdx).getSequence();
+//                    final Iterable<AlignedAssembly.AlignmentInterval> arOfAContig = convertToAlignmentRegions(assemblyIdString, AlignedAssemblyOrExcuse.formatContigID(contigIdx), refNames, allAlignments.get(contigIdx), contigSequence.length);
+//                    result.add(new Tuple2<>(arOfAContig, contigSequence));
+//                } );
+//
+//        return result;
+//    }
+//
+//    /**
+//     * Converts alignment records of the contig pointed to by {@code contigIdx} in a {@link FermiLiteAssembly} to custom {@link AlignmentRegion} format.
+//     */
+//    @VisibleForTesting
+//    private static Iterable<AlignedAssembly.AlignmentInterval> convertToAlignmentRegions(final String assemblyIdString, final String contigIdString, final List<String> refNames,
+//                                                                       final List<BwaMemAlignment> contigAlignments, final int unClippedContigLength) {
+//
+//        return contigAlignments.stream()
+//                .filter( bwaMemAlignment ->  bwaMemAlignment.getRefId() >= 0 && SAMFlag.NOT_PRIMARY_ALIGNMENT.isUnset(bwaMemAlignment.getSamFlag())) // mapped and not XA (i.e. not secondary)
+//                .map(bwaMemAlignment -> BwaMemAlignmentUtils.applyAlignment(assemblyIdString+":"+contigIdString, ))
+//                .map(AlignedAssembly.AlignmentInterval::new)
+//                /*.map(bwaMemAlignment -> new AlignmentRegion(assemblyIdString, contigIdString, unClippedContigLength, bwaMemAlignment, refNames))*/
+//                .map(ar -> breakGappedAlignment(ar, SVConstants.DiscoveryStepConstants.GAPPED_ALIGNMENT_BREAK_DEFAULT_SENSITIVITY, unClippedContigLength))
+//                .flatMap(Utils::stream).collect(Collectors.toList());
+//    }
+
 }

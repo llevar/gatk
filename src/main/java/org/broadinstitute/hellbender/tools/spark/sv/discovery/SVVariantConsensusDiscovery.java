@@ -15,7 +15,6 @@ import org.apache.spark.broadcast.Broadcast;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.SVVariantDiscoveryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
@@ -34,12 +33,12 @@ import java.util.stream.StreamSupport;
 public class SVVariantConsensusDiscovery implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment_old>> discoverNovelAdjacencyFromChimericAlignments(
+    static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment>> discoverNovelAdjacencyFromChimericAlignments(
             final JavaRDD<Iterable<SAMRecord>> alignmentRegionsWithContigSequence,
             final Logger logger)
     {
         return alignmentRegionsWithContigSequence.filter(iterable -> Iterables.size(iterable)>1) // filter out any contigs that has less than two alignment records
-                .flatMap( input -> ChimericAlignment.fromSplitAlignments(input).iterator())              // 1. AR -> {CA}
+                .flatMap( input -> ChimericAlignment_out.fromSplitAlignments(input).iterator())              // 1. AR -> {CA}
                 .mapToPair(ca -> new Tuple2<>(new NovelAdjacencyReferenceLocations(ca), ca))             // 2. CA -> NovelAdjacency
                 .groupByKey();                                                                           // 3. {consensus NovelAdjacency}
     }
@@ -52,12 +51,12 @@ public class SVVariantConsensusDiscovery implements Serializable {
      * @param broadcastReference                broadcasted reference
      * @throws IOException                      due to read operations on the reference
      */
-    public static VariantContext discoverVariantsFromConsensus(final Tuple2<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment_old>> breakpointPairAndItsEvidence,
+    public static VariantContext discoverVariantsFromConsensus(final Tuple2<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment>> breakpointPairAndItsEvidence,
                                                                final Broadcast<ReferenceMultiSource> broadcastReference)
             throws IOException {
 
         final NovelAdjacencyReferenceLocations novelAdjacencyReferenceLocations = breakpointPairAndItsEvidence._1;
-        final Iterable<ChimericAlignment_old> evidence = breakpointPairAndItsEvidence._2();
+        final Iterable<ChimericAlignment> evidence = breakpointPairAndItsEvidence._2();
         final String contig = novelAdjacencyReferenceLocations.leftJustifiedLeftRefLoc.getContig();
         final int start = novelAdjacencyReferenceLocations.leftJustifiedLeftRefLoc.getEnd();
         final int end = novelAdjacencyReferenceLocations.leftJustifiedRightRefLoc.getStart();
@@ -196,7 +195,7 @@ public class SVVariantConsensusDiscovery implements Serializable {
         final String contigID;
         final List<String> insSeqMappings;
 
-        BreakpointEvidenceAnnotations(final ChimericAlignment_old chimericAlignmentOld){
+        BreakpointEvidenceAnnotations(final ChimericAlignment chimericAlignmentOld){
             minMQ = Math.min(chimericAlignmentOld.regionWithLowerCoordOnContig.mapQual, chimericAlignmentOld.regionWithHigherCoordOnContig.mapQual);
             minAL = Math.min(chimericAlignmentOld.regionWithLowerCoordOnContig.referenceInterval.size(), chimericAlignmentOld.regionWithHigherCoordOnContig.referenceInterval.size())
                     - SVVariantDiscoveryUtils.overlapOnContig(chimericAlignmentOld.regionWithLowerCoordOnContig, chimericAlignmentOld.regionWithHigherCoordOnContig);
@@ -207,10 +206,10 @@ public class SVVariantConsensusDiscovery implements Serializable {
     }
 
     @VisibleForTesting
-    static Map<String, Object> getEvidenceRelatedAnnotations(final Iterable<ChimericAlignment_old> splitAlignmentEvidence) {
+    static Map<String, Object> getEvidenceRelatedAnnotations(final Iterable<ChimericAlignment> splitAlignmentEvidence) {
 
         final List<BreakpointEvidenceAnnotations> annotations = StreamSupport.stream(splitAlignmentEvidence.spliterator(), false)
-                .sorted((final ChimericAlignment_old o1, final ChimericAlignment_old o2) -> { // sort by assembly id, then sort by contig id
+                .sorted((final ChimericAlignment o1, final ChimericAlignment o2) -> { // sort by assembly id, then sort by contig id
                     if (o1.assemblyId.equals(o2.assemblyId)) return o1.contigId.compareTo(o2.contigId);
                     else return o1.assemblyId.compareTo(o2.assemblyId);
                 })

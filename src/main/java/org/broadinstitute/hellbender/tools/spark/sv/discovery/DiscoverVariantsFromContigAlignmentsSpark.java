@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.spark.sv.discovery;
 
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
-import com.google.common.annotations.VisibleForTesting;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -94,7 +93,7 @@ public final class DiscoverVariantsFromContigAlignmentsSpark extends GATKSparkTo
 
         return Utils.stream(reads)
                 .filter(r -> !r.isSecondaryAlignment())
-                .map(r -> AlignmentGapBreaker.breakGappedAlignment(r.convertToSAMRecord(header), sensitivity))
+                .map(r -> AlignmentGapBreaker.breakGappedAlignment_out(r.convertToSAMRecord(header), sensitivity))
                 .flatMap(Utils::stream).collect(Collectors.toList());
     }
 

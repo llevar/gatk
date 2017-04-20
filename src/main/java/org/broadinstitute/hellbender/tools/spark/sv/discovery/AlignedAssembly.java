@@ -26,8 +26,6 @@ import java.util.stream.IntStream;
 @DefaultSerializer(AlignedAssembly.Serializer.class)
 public final class AlignedAssembly {
 
-    public static final String DUMMY_ASM_ID = "ASSEMBLY";
-
     final int assemblyId;
 
     final List<AlignedContig> listOfContigsWithItsAlignmentIntervals;
@@ -229,6 +227,17 @@ public final class AlignedAssembly {
             int result = Arrays.hashCode(contigSequence);
             result = 31 * result + alignmentIntervals.hashCode();
             return result;
+        }
+
+        /**
+         * todo Remember this does not break the gaps
+         * @param samRecords
+         * @param unClippedContigLength
+         * @return
+         */
+        static Iterable<AlignedAssembly.AlignmentInterval> extractAlignmentIntervalsFromSAM(final Iterable<SAMRecord> samRecords,
+                                                                                            final int unClippedContigLength) {
+            return Utils.stream(samRecords).map(AlignedAssembly.AlignmentInterval::new).collect(Collectors.toList());
         }
     }
 

@@ -14,8 +14,8 @@ import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
 import org.broadinstitute.hellbender.cmdline.programgroups.StructuralVariationSparkProgramGroup;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.engine.spark.GATKSparkTool;
-import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
 import org.broadinstitute.hellbender.tools.spark.sv.StructuralVariationDiscoveryArgumentCollection;
+import org.broadinstitute.hellbender.tools.spark.sv.discovery.ChimericAlignment;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.NovelAdjacencyReferenceLocations;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.SVVCFWriter;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.SVVariantConsensusDiscovery;
@@ -149,12 +149,12 @@ public final class DiscoverVariantsFromAlignedSGAContigsSpark extends GATKSparkT
      * @param alignmentRegionsWithContigSequence A data structure as described above, where a list of AlignmentRegions and the sequence of the contig are keyed by a tuple of Assembly ID and Contig ID
      * @param logger                             for logging information and accredit to the calling tool
      */
-    private static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment_old>> discoverNovelAdjacencyFromChimericAlignments_old(
+    private static JavaPairRDD<NovelAdjacencyReferenceLocations, Iterable<ChimericAlignment>> discoverNovelAdjacencyFromChimericAlignments_old(
             final JavaPairRDD<Iterable<AlignmentRegion>, byte[]> alignmentRegionsWithContigSequence,
             final Logger logger)
     {
 //        return alignmentRegionsWithContigSequence.filter(pair -> Iterables.size(pair._1())>1) // filter out any contigs that has less than two alignment records
-//                .flatMap( input -> ChimericAlignment_old.fromSplitAlignments_old(input).iterator())              // 1. AR -> {CA}
+//                .flatMap( input -> ChimericAlignment.fromSplitAlignments_old(input).iterator())              // 1. AR -> {CA}
 //                .mapToPair(ca -> new Tuple2<>(new NovelAdjacencyReferenceLocations(ca), ca))             // 2. CA -> NovelAdjacency
 //                .groupByKey();                                                                           // 3. {consensus NovelAdjacency}
         return null;

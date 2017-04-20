@@ -11,8 +11,6 @@ import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.TextCigarCodec;
 import htsjdk.samtools.util.SequenceUtil;
 import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.read.CigarUtils;
 
@@ -22,7 +20,7 @@ import java.util.*;
  * A helper struct for annotating complications that make the locations represented by its associated {@link NovelAdjacencyReferenceLocations}
  * a little ambiguous, so that downstream analysis could infer sv type with these complications.
  * To be updated as more types of complications can be processed and handled by
- * {@link BreakpointComplications( ChimericAlignment_old )}.
+ * {@link BreakpointComplications( ChimericAlignment )}.
  */
 @DefaultSerializer(BreakpointComplications.Serializer.class)
 final class BreakpointComplications {
@@ -98,10 +96,10 @@ final class BreakpointComplications {
     }
 
     /**
-     * Given an {@link ChimericAlignment_old} representing two reference intervals rearranged as two intervals on the locally-assembled contig,
+     * Given an {@link ChimericAlignment} representing two reference intervals rearranged as two intervals on the locally-assembled contig,
      * identify potential complications such as homology and duplication on the reference and/or on the contig.
      */
-    BreakpointComplications(final ChimericAlignment_old chimericAlignmentOld) {
+    BreakpointComplications(final ChimericAlignment chimericAlignmentOld) {
         final SimpleInterval leftReferenceInterval  = chimericAlignmentOld.getCoordSortedReferenceIntervals()._1;
         final SimpleInterval rightReferenceInterval = chimericAlignmentOld.getCoordSortedReferenceIntervals()._2;
 
@@ -113,11 +111,11 @@ final class BreakpointComplications {
         // a segment with lower coordinate on the locally-assembled contig could map to a higher reference coordinate region
         // under two basic types of SV's: inversion (strand switch necessary) and translocation (no strand switch necessary)
         final boolean isNotSimpleTranslocation
-                = ChimericAlignment_old.isNotSimpleTranslocation(chimericAlignmentOld.regionWithLowerCoordOnContig, chimericAlignmentOld.regionWithHigherCoordOnContig,
-                chimericAlignmentOld.strandSwitch, ChimericAlignment_old.involvesRefPositionSwitch(firstContigRegion, secondContigRegion));
+                = ChimericAlignment.isNotSimpleTranslocation(chimericAlignmentOld.regionWithLowerCoordOnContig, chimericAlignmentOld.regionWithHigherCoordOnContig,
+                chimericAlignmentOld.strandSwitch, ChimericAlignment.involvesRefPositionSwitch(firstContigRegion, secondContigRegion));
 
         // TODO: 12/5/16 simple translocation, don't tackle yet
-        if (chimericAlignmentOld.strandSwitch!= ChimericAlignment_old.StrandSwitch.NO_SWITCH) { // the case involves an inversion
+        if (chimericAlignmentOld.strandSwitch!= ChimericAlignment.StrandSwitch.NO_SWITCH) { // the case involves an inversion
             // TODO: 12/5/16 duplication detection to be done for inversion alleles
             initForSimpleInversion(firstContigRegion, secondContigRegion, contigSeq);
         } else if (isNotSimpleTranslocation) {
@@ -135,7 +133,7 @@ final class BreakpointComplications {
         hasDuplicationAnnotation = false;
     }
 
-    private void initForInsDel(final ChimericAlignment_old chimericAlignmentOld, final SimpleInterval leftReferenceInterval, final SimpleInterval rightReferenceInterval, final byte[] contigSeq) {
+    private void initForInsDel(final ChimericAlignment chimericAlignmentOld, final SimpleInterval leftReferenceInterval, final SimpleInterval rightReferenceInterval, final byte[] contigSeq) {
 
         final AlignedAssembly.AlignmentInterval firstContigRegion  = chimericAlignmentOld.regionWithLowerCoordOnContig;
         final AlignedAssembly.AlignmentInterval secondContigRegion = chimericAlignmentOld.regionWithHigherCoordOnContig;
@@ -226,11 +224,11 @@ final class BreakpointComplications {
 
 
     /**
-     * Given a {@link AlignmentRegion} from a pair of ARs that forms a {@link ChimericAlignment_old} signalling a tandem duplication,
-     * extract a CIGAR from the {@link AlignmentRegion#cigarAlong5to3DirectionOfContig}
+     * Given a {@link AlignedAssembly.AlignmentInterval} from a pair of ARs that forms a {@link ChimericAlignment} signalling a tandem duplication,
+     * extract a CIGAR from the {@link AlignedAssembly.AlignmentInterval#cigarAlong5to3DirectionOfContig}
      * that corresponds to the alignment between the suspected repeated sequence on reference between
      * [{@code alignmentRegionTwoReferenceIntervalSpanBegin}, {@code alignmentRegionOneReferenceIntervalSpanEnd}],
-     * and the sequence in {@link AlignmentRegion#referenceInterval}.
+     * and the sequence in {@link AlignedAssembly.AlignmentInterval#referenceInterval}.
      */
     @VisibleForTesting
     static Cigar extractCigarForTandup(final AlignedAssembly.AlignmentInterval contigRegion,
@@ -288,7 +286,7 @@ final class BreakpointComplications {
     }
 
     /**
-     * Note: not suitable for the most complicated case dealt with in {@link BreakpointComplications( ChimericAlignment_old )}
+     * Note: not suitable for the most complicated case dealt with in {@link BreakpointComplications( ChimericAlignment )}
      * @return Inserted sequence using two alignments of the same contig: as indicated by their separation on the the contig itself.
      */
     @VisibleForTesting

@@ -6,8 +6,6 @@ import com.esotericsoftware.kryo.io.Output;
 import htsjdk.samtools.TextCigarCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
@@ -89,13 +87,11 @@ public class NovelAdjacencyReferenceLocationsUnitTest extends BaseTest{
     }
 
     private static NovelAdjacencyReferenceLocations getBreakpoints(final String assemblyId, final String contigId, final String insertionMapping) throws IOException{
-        // final AlignmentRegion region1 = new AlignmentRegion(assemblyId, contigId, new SimpleInterval("20", 10000, 10100), TextCigarCodec.decode("100M"), true, 60, 0, 1, 100);
-        // final AlignmentRegion region2 = new AlignmentRegion(assemblyId, contigId, new SimpleInterval("20", 20100, 20200), TextCigarCodec.decode("100M"), false, 60, 0, 101, 200);
         final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 10000, 10100), 1, 100, TextCigarCodec.decode("100M"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 20100, 20200), 101, 200, TextCigarCodec.decode("100M"), false, 60, 0);
         final ArrayList<String> insertionMappings = new ArrayList<>();
         insertionMappings.add(insertionMapping);
-        final ChimericAlignment_old breakpoint = new ChimericAlignment_old(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(100, (byte)'A'), insertionMappings, assemblyId, contigId);
+        final ChimericAlignment breakpoint = new ChimericAlignment(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(100, (byte)'A'), insertionMappings, assemblyId, contigId);
         return new NovelAdjacencyReferenceLocations(breakpoint);
     }
 
@@ -155,22 +151,19 @@ public class NovelAdjacencyReferenceLocationsUnitTest extends BaseTest{
     @Test
     public void testGetAssembledBreakpointsFromAlignmentRegionsWithOverlappingAlignmentRegion() throws Exception {
         final byte[] contigSequence = "ACTAGAGCATCTACGTGTTCCTGTGGTTTTGGAGCAAGAGTGATTTGAGTTTCAGAGATTTTTACTAATTCTTCTTCCCCTACCAGAAAAAAAGATCTTACCATTTGAGAGTGAGATGTAAACCCAGCCCTGTCTGACCTGAGTCTGTGCCCTAAGCCTATGCTAAGCCAAGCAGTGCCTGGAGCCACCACAGGTCCACACAATTCGTTAACATGATGAAGCAAGGATGGAAATTGGACAAAATAGTGTGCCTACTGAATCTAAGAATGAAAAATGATTGCACTCCTACTCTGAGTGCTTTGGAGCACTGCCCAGTTGGGCAAAGGGTCAGCGCCTGGGCAGAGGTCCCCACAACCTGGCAGGAGTGTGGTCGGCCACCCTATGGGCCTCCATCATGTGCAGTGACAGCGGGGCTGTCATGTCACCGTGTGGGAGGGCTTGCAGGTGAAGTGGTCTGGGAGGGGTCCCCCAGACAAAGCCAAGGTTCTGAGAGTTGGCCCGAACACTGCTGGATTCCACTTCACCTGCAAGCCCTCCCACACGGTGACATGACAGCCTATAATACAGTTCCGCATGGCCACGTCATACAACCCTGTCATATTGGTGAGCAATTGCTGTGTAGCCAAAGACCCCAAAACTCAAACAGCATTTATTATTATTGCCCCCATGTCTGAGAGTCAGATGTGCATTTGCTGATCTCAGCTTGTTTGAGCTGCTGCAGGGTTGGGGCTCTGCTCCAGGCAGGCTTAGCTGTCACCACATGCACACATACATTCTGGGCCTCTGCTGCGCGCGTCACGTTCACTGAAGATCTTGGGATTGGGAGTTAGGGCGGTGGGAGGGCCCAGCAAAGTCACCTGGCGATGGCAGGGACACAGGGAGGAATGTAGAATGGGGCCGATGATGGGACCCACACGTCTGCAAAGCTGCGGTCTCCTTGAGGGGTGGAGACAGCAACAACTCACCGCACGCGGTGCTTCAGTTCACCATCTCCCTGGGACATTAGGGGGCCCCGTGTTATCTCATTTTGCTCTGGTTTGCATTAGTTTTTTATCACTTCGTAGATGAAGCCACTGACACCCAGAGAGGGAAAGTGGCCTGACCAAGGGCCACAGCAGGGGAGCGAAGGAGCCCCACAGTTCGGCAGGAACACAGCCTCTCCCTGGCTTTCAGGTTCACTGACATCTTCTCATGGCCTCTGTAACTCACCAGGCATCAGGGTGTAGTCCTTAGACCAGTGTCCCACAGCTGCCACAGAGTGGGAGCTCACCATCAGTTATAAGTCACTAGAAAGGCTTTTGGACATTATAAGCTACAATGGAAAATAAGTCATCTGTGGATTTTTGTGACAGATTCCAAAAATTTGAATATTTTGTCTACTTAGGTTTTTGGTTAATTTTATCCTCAAAACTGTTCTGCAGTGATTAAGCTGTACAAACTGCATCATGGGCGAATTGGCATATTCAGAAATGACTGATATTCTTGATTTCAGTTTTTTACTTTGTATGTAGCTCCTCAAGGAAAC".getBytes();
-//        final AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 23102817, 23103304), TextCigarCodec.decode("487M1006S"), true, 60, 1, 1, 487);
-//        final AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 23103196, 23103238), TextCigarCodec.decode("483S42M968S"), false, 60, 2, 484, 525);
-//        final AlignmentRegion region3 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 23103633, 23104603), TextCigarCodec.decode("523S970M"), true, 60, 3, 524, 1493);
         final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 23102817, 23103304), 1, 487, TextCigarCodec.decode("487M1006S"), true, 60, 1);
         final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 23103196, 23103238), 484, 525, TextCigarCodec.decode("483S42M968S"), false, 60, 2);
         final AlignedAssembly.AlignmentInterval region3 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 23103633, 23104603), 524, 1493, TextCigarCodec.decode("523S970M"), true, 60, 3);
 
         final List<AlignedAssembly.AlignmentInterval> alignmentRegionList = Arrays.asList(region1, region2, region3);
-        final List<ChimericAlignment_old> assembledBreakpointsFromAlignmentRegions = ChimericAlignment_old.fromSplitAlignments_old(new Tuple2<>(alignmentRegionList, contigSequence), "1", "contig-1");
+        final List<ChimericAlignment> assembledBreakpointsFromAlignmentRegions = ChimericAlignment.fromSplitAlignments_old(new Tuple2<>(alignmentRegionList, contigSequence), "1", "contig-1");
         Assert.assertEquals(assembledBreakpointsFromAlignmentRegions.size(), 1);
-        final ChimericAlignment_old chimericAlignmentOld = assembledBreakpointsFromAlignmentRegions.get(0);
+        final ChimericAlignment chimericAlignmentOld = assembledBreakpointsFromAlignmentRegions.get(0);
         Assert.assertEquals(chimericAlignmentOld.contigId, "contig-1");
         Assert.assertEquals(chimericAlignmentOld.regionWithLowerCoordOnContig, region1);
         Assert.assertEquals(chimericAlignmentOld.regionWithHigherCoordOnContig, region3);
         Assert.assertEquals(chimericAlignmentOld.insertionMappings.size(), 1);
-        final String expectedInsertionMappingsString = String.join(AlignmentRegion.PACKED_STRING_REP_SEPARATOR, "1", "contig-1", "484", "525", "20", "23103196", "-", "483S42M968S", "60", "2");
+        final String expectedInsertionMappingsString = String.join(AlignedAssembly.AlignmentInterval.PACKED_STRING_REP_SEPARATOR, "1", "contig-1", "484", "525", "20", "23103196", "-", "483S42M968S", "60", "2");
         Assert.assertEquals(chimericAlignmentOld.insertionMappings.get(0), expectedInsertionMappingsString);//"1_contig-1_484_525_20_23103196_-_483S42M968S_60_2");
         final NovelAdjacencyReferenceLocations breakpoints = new NovelAdjacencyReferenceLocations(chimericAlignmentOld);
         Assert.assertTrue(breakpoints.complication.getHomologyForwardStrandRep().isEmpty());
@@ -181,38 +174,30 @@ public class NovelAdjacencyReferenceLocationsUnitTest extends BaseTest{
     @Test
     public void testStrandedness_Inversion() throws IOException {
 
-//        final AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 10000, 10100), TextCigarCodec.decode("100M"), true, 60, 0, 1, 100);
-//        final AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 20100, 20200), TextCigarCodec.decode("100M"), false, 60, 0, 101, 200);
         final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 10000, 10100), 1, 100, TextCigarCodec.decode("100M"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 20100, 20200), 101, 200, TextCigarCodec.decode("100M"), false, 60, 0);
-        final ChimericAlignment_old breakpoint1 = new ChimericAlignment_old(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(100, (byte)'A'), new ArrayList<>(), "1", "contig-1");
+        final ChimericAlignment breakpoint1 = new ChimericAlignment(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(100, (byte)'A'), new ArrayList<>(), "1", "contig-1");
 
         Assert.assertNotEquals(NovelAdjacencyReferenceLocations.determineEndConnectionType(breakpoint1), NovelAdjacencyReferenceLocations.EndConnectionType.FIVE_TO_THREE);
 
-//        final AlignmentRegion region3 = new AlignmentRegion("4", "contig-7", new SimpleInterval("21", 38343346, 38343483), TextCigarCodec.decode("137M141S"), true, 60, 0, 1, 137);
-//        final AlignmentRegion region4 = new AlignmentRegion("4", "contig-7", new SimpleInterval("20", 38342908, 38343049), TextCigarCodec.decode("137S141M"), false, 60, 0, 138, 278);
         final AlignedAssembly.AlignmentInterval region3 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 38343346, 38343483), 1, 137, TextCigarCodec.decode("137M141S"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region4 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 38342908, 38343049), 138, 278, TextCigarCodec.decode("137S141M"), false, 60, 0);
-        final ChimericAlignment_old breakpoint2 = new ChimericAlignment_old(region3, region4, SVDiscoveryTestDataProvider.makeDummySequence(137+141, (byte)'A'), new ArrayList<>(), "4", "contig-7");
+        final ChimericAlignment breakpoint2 = new ChimericAlignment(region3, region4, SVDiscoveryTestDataProvider.makeDummySequence(137+141, (byte)'A'), new ArrayList<>(), "4", "contig-7");
 
         Assert.assertEquals(NovelAdjacencyReferenceLocations.determineEndConnectionType(breakpoint2), NovelAdjacencyReferenceLocations.EndConnectionType.FIVE_TO_FIVE);
 
-//        final AlignmentRegion region5 = new AlignmentRegion("3", "contig-7", new SimpleInterval("21", 38343346, 38343483), TextCigarCodec.decode("137M141S"), true, 60, 0, 1, 137);
-//        final AlignmentRegion region6 = new AlignmentRegion("3", "contig-7", new SimpleInterval("21", 38342908, 38343049), TextCigarCodec.decode("137S141M"), false, 60, 0, 138, 278);
         final AlignedAssembly.AlignmentInterval region5 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 38343346, 38343483), 1, 137, TextCigarCodec.decode("137M141S"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region6 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 38342908, 38343049), 138, 278, TextCigarCodec.decode("137S141M"), false, 60, 0);
-        final ChimericAlignment_old breakpoint3 = new ChimericAlignment_old(region5, region6, SVDiscoveryTestDataProvider.makeDummySequence(137+141, (byte)'A'), new ArrayList<>(), "3", "contig-7");
+        final ChimericAlignment breakpoint3 = new ChimericAlignment(region5, region6, SVDiscoveryTestDataProvider.makeDummySequence(137+141, (byte)'A'), new ArrayList<>(), "3", "contig-7");
 
         Assert.assertEquals(NovelAdjacencyReferenceLocations.determineEndConnectionType(breakpoint3), NovelAdjacencyReferenceLocations.EndConnectionType.FIVE_TO_FIVE);
     }
 
     @Test
     public void testGetBreakpoints_5to3Inversion_simple() throws IOException {
-        // final AlignmentRegion region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 101, 200), TextCigarCodec.decode("100M100S"), true, 60, 0, 1, 100);
-        // final AlignmentRegion region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 501, 600), TextCigarCodec.decode("100S100M"), false, 60, 0, 101, 200);
         final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 101, 200), 1, 100, TextCigarCodec.decode("100M100S"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 501, 600), 101, 200, TextCigarCodec.decode("100S100M"), false, 60, 0);
-        final ChimericAlignment_old chimericAlignmentOld = new ChimericAlignment_old(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(200, (byte)'A'), Collections.emptyList(), "1","1");
+        final ChimericAlignment chimericAlignmentOld = new ChimericAlignment(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(200, (byte)'A'), Collections.emptyList(), "1","1");
         final Tuple2<SimpleInterval, SimpleInterval> breakpoints = NovelAdjacencyReferenceLocations.leftJustifyBreakpoints(chimericAlignmentOld, DEFAULT_BREAKPOINT_COMPLICATIONS);
         Assert.assertEquals(breakpoints._1(), new SimpleInterval("20", 200, 200));
         Assert.assertEquals(breakpoints._2(), new SimpleInterval("20", 600, 600));
@@ -220,11 +205,9 @@ public class NovelAdjacencyReferenceLocationsUnitTest extends BaseTest{
 
     @Test
     public void testGetBreakpoints_5to3Inversion_withSimpleHomology() throws IOException {
-        // final AlignmentRegion region1 = new AlignmentRegion("1","1", new SimpleInterval("20", 101, 205), TextCigarCodec.decode("105M100S"), true, 60, 0, 1, 105);
-        // final AlignmentRegion region2 = new AlignmentRegion("1","1", new SimpleInterval("20", 501, 605), TextCigarCodec.decode("105M100S"), false, 60, 0, 96, 200);
         final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 101, 205), 1, 105, TextCigarCodec.decode("105M100S"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 501, 605), 96, 200, TextCigarCodec.decode("105M100S"), false, 60, 0);
-        final ChimericAlignment_old chimericAlignmentOld = new ChimericAlignment_old(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(205, (byte)'A'), Collections.emptyList(), "1","1");
+        final ChimericAlignment chimericAlignmentOld = new ChimericAlignment(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(205, (byte)'A'), Collections.emptyList(), "1","1");
         final BreakpointComplications homologyComplications = new BreakpointComplications("ACACA", "",
                 DEFAULT_BREAKPOINT_COMPLICATIONS.hasDuplicationAnnotation(), DEFAULT_BREAKPOINT_COMPLICATIONS.getDupSeqRepeatUnitRefSpan(), DEFAULT_BREAKPOINT_COMPLICATIONS.getDupSeqRepeatNumOnRef(), DEFAULT_BREAKPOINT_COMPLICATIONS.getDupSeqRepeatNumOnCtg(), DEFAULT_BREAKPOINT_COMPLICATIONS.getCigarStringsForDupSeqOnCtg(), DEFAULT_BREAKPOINT_COMPLICATIONS.isDupAnnotIsFromOptimization());
         final Tuple2<SimpleInterval, SimpleInterval> breakpoints = NovelAdjacencyReferenceLocations.leftJustifyBreakpoints(chimericAlignmentOld, homologyComplications);
@@ -237,11 +220,9 @@ public class NovelAdjacencyReferenceLocationsUnitTest extends BaseTest{
     // -----------------------------------------------------------------------------------------------
     @Test(expectedExceptions = GATKException.class)
     public void testGetBreakpoints_ExpectException() throws IOException {
-        // final AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100001, 100100), TextCigarCodec.decode("100M"), true, 60, 0, 1 ,100);
-        // final AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 100101, 100200), TextCigarCodec.decode("100M"), true, 60, 0, 101 ,200);
         final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100001, 100100), 1 ,100, TextCigarCodec.decode("100M"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 100101, 100200), 101 ,200, TextCigarCodec.decode("100M"), true, 60, 0);
-        final ChimericAlignment_old chimericAlignmentOld = new ChimericAlignment_old(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(200, (byte)'A'), Collections.emptyList(), "1", "contig-1");
+        final ChimericAlignment chimericAlignmentOld = new ChimericAlignment(region1, region2, SVDiscoveryTestDataProvider.makeDummySequence(200, (byte)'A'), Collections.emptyList(), "1", "contig-1");
         new BreakpointComplications(chimericAlignmentOld);
     }
 
@@ -464,16 +445,13 @@ public class NovelAdjacencyReferenceLocationsUnitTest extends BaseTest{
     @Test(enabled = false)
     public void testGetAssembledBreakpointsFromAlignmentRegions() throws Exception {
         final byte[] contigSequence = "GACGAACGATTTGACTTTAATATGAAATGTTTTATGTGGGCTATAAAATTATCCAAACTCGACACAGGACATTTTGAGCTTATTTCCAAATCATCTGGCCTTCATCTACCCACTGGAACTATTACTCTGCTGGGTCCTCATGGAAACATATCTTTCAGCCCTAACAATGAGACTACAGACATCTACGTCCCCAACACAACAGCTAAAAAGCAGTAGAATGTCAGAAAGGCTATCCACTTAGCCCTTGGCTGACAGGCCCCACTGAGCATCCTTTGCGAAGTCCATTTACTAGCTAATTCATAATTTACACAAGGCATTCAGACATAGCAGCTAAGATATAAAACATTTATCAACACAGGGACTAGTTTGTCATTTTAAAATAATTATGTTTAAGTAAGCCAATAAAGTCTATCTTCTCCAATTTACTTATTGAGCTTTATGAGGCAATTTAAGTCCCGATTTTGGGGGGTATGTATGAAAGGAGAGCATGGAAATGCCATTTGCTCCCTGAAGTTTTTATCTTTTTTTTTTTGAGATAGAGTCTTGTGTTTTCTGTGGAGTACATGAGTATGCATCAAAGCTAACAACGCCCACTGCCCTGTTAGTCAAATACCTTTGA".getBytes();
-        // final AlignmentRegion region1 = new AlignmentRegion("1", "contig-1", new SimpleInterval("21", 118873207, 118873739), TextCigarCodec.decode("532M87S"), true, 60, 0, 1, 532);
-        // final AlignmentRegion region2 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 175705642, 175705671), TextCigarCodec.decode("518S29M72S"), false, 3, 0, 519, 547);
-        // final AlignmentRegion region3 = new AlignmentRegion("1", "contig-1", new SimpleInterval("20", 118875262, 118875338), TextCigarCodec.decode("543S76M"), false, 60, 0, 544, 619);
         final AlignedAssembly.AlignmentInterval region1 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("21", 118873207, 118873739), 1, 532, TextCigarCodec.decode("532M87S"), true, 60, 0);
         final AlignedAssembly.AlignmentInterval region2 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 175705642, 175705671), 519, 547, TextCigarCodec.decode("518S29M72S"), false, 3, 0);
         final AlignedAssembly.AlignmentInterval region3 = new AlignedAssembly.AlignmentInterval(new SimpleInterval("20", 118875262, 118875338), 544, 619, TextCigarCodec.decode("543S76M"), false, 60, 0);
         final List<AlignedAssembly.AlignmentInterval> alignmentRegionList = Arrays.asList(region1, region2, region3);
-        final List<ChimericAlignment_old> assembledBreakpointsFromAlignmentRegions = ChimericAlignment_old.fromSplitAlignments_old(new Tuple2<>(alignmentRegionList, contigSequence), "1", "contig-1");
+        final List<ChimericAlignment> assembledBreakpointsFromAlignmentRegions = ChimericAlignment.fromSplitAlignments_old(new Tuple2<>(alignmentRegionList, contigSequence), "1", "contig-1");
         Assert.assertEquals(assembledBreakpointsFromAlignmentRegions.size(), 1);
-        final ChimericAlignment_old chimericAlignmentOld = assembledBreakpointsFromAlignmentRegions.get(0);
+        final ChimericAlignment chimericAlignmentOld = assembledBreakpointsFromAlignmentRegions.get(0);
         Assert.assertEquals(chimericAlignmentOld.contigId, "contig-1");
         Assert.assertEquals(chimericAlignmentOld.regionWithLowerCoordOnContig, region1);
         Assert.assertEquals(chimericAlignmentOld.regionWithHigherCoordOnContig, region3);

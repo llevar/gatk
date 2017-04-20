@@ -5,7 +5,6 @@ import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
 import org.broadinstitute.hellbender.tools.spark.sv.discovery.AlignedAssembly;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.AlignmentRegion;
 import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.List;
@@ -20,23 +19,8 @@ public final class SVVariantDiscoveryUtils {
      *          Mostly useful for computing micro-homologyForwardStrandRep.
      */
     @VisibleForTesting
-    public static int overlapOnContig(final AlignmentRegion one, final AlignmentRegion two) {
-        return Math.max(0, Math.min(one.endInAssembledContig + 1, two.endInAssembledContig + 1) - Math.max(one.startInAssembledContig, two.startInAssembledContig));
-    }
-
-    /**
-     * @return the number of bases of two alignment regions overlap on the locally-assembled contig they originate from.
-     *          Mostly useful for computing micro-homologyForwardStrandRep.
-     */
-    @VisibleForTesting
     public static int overlapOnContig(final AlignedAssembly.AlignmentInterval one, final AlignedAssembly.AlignmentInterval two) {
         return Math.max(0, Math.min(one.endInAssembledContig + 1, two.endInAssembledContig + 1) - Math.max(one.startInAssembledContig, two.startInAssembledContig));
-    }
-
-    public static int overlapOnContig(final int alignmentOneStartInAssembledContig, final int alignmentTwoStartInAssembledContig,
-                                      final int alignmentOneEndInAssembledContig,   final int alignmentTwoEndInAssembledContig) {
-        return Math.max(0, Math.min(alignmentOneEndInAssembledContig, alignmentTwoEndInAssembledContig) + 1
-                           - Math.max(alignmentOneStartInAssembledContig, alignmentTwoStartInAssembledContig));
     }
 
     /**

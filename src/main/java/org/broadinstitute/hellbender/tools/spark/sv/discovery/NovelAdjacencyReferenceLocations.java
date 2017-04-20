@@ -5,7 +5,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.google.common.annotations.VisibleForTesting;
-import org.broadinstitute.hellbender.tools.spark.sv.sga.ChimericAlignment_old;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import scala.Tuple2;
@@ -18,7 +17,7 @@ import static org.broadinstitute.hellbender.tools.spark.sv.discovery.NovelAdjace
 /**
  * This class represents a pair of inferred genomic locations on the reference whose novel adjacency is generated
  * due to a simple SV event (in other words, a simple rearrangement between two genomic locations)
- * that is suggested by the input {@link ChimericAlignment_old},
+ * that is suggested by the input {@link ChimericAlignment},
  * and complications in pinning down the locations to exact base pair resolution.
  */
 @DefaultSerializer(NovelAdjacencyReferenceLocations.Serializer.class)
@@ -38,7 +37,7 @@ public class NovelAdjacencyReferenceLocations {
         FIVE_TO_THREE, THREE_TO_THREE, FIVE_TO_FIVE
     }
 
-    public NovelAdjacencyReferenceLocations(final ChimericAlignment_old chimericAlignmentOld)
+    NovelAdjacencyReferenceLocations(final ChimericAlignment chimericAlignmentOld)
             throws IOException {
 
         // first get endConnectionType, then get complications, finally use complications to justify breakpoints
@@ -53,7 +52,7 @@ public class NovelAdjacencyReferenceLocations {
 
     // TODO: 12/12/16 again, does not work for translocation
     @VisibleForTesting
-    static EndConnectionType determineEndConnectionType(final ChimericAlignment_old chimericAlignmentOld) {
+    static EndConnectionType determineEndConnectionType(final ChimericAlignment chimericAlignmentOld) {
         if (chimericAlignmentOld.regionWithLowerCoordOnContig.forwardStrand == chimericAlignmentOld.regionWithHigherCoordOnContig.forwardStrand) {
             return FIVE_TO_THREE;
         } else {
@@ -68,7 +67,7 @@ public class NovelAdjacencyReferenceLocations {
      * with higher reference coordinates.
      */
     @VisibleForTesting
-    static Tuple2<SimpleInterval, SimpleInterval> leftJustifyBreakpoints(final ChimericAlignment_old ca, final BreakpointComplications complication) {
+    static Tuple2<SimpleInterval, SimpleInterval> leftJustifyBreakpoints(final ChimericAlignment ca, final BreakpointComplications complication) {
 
         final int homologyLen = complication.getHomologyForwardStrandRep().length();
 
@@ -101,10 +100,10 @@ public class NovelAdjacencyReferenceLocations {
             }
             leftBreakpointRefContig  = leftReferenceInterval.getContig();
             rightBreakpointRefContig = rightReferenceInterval.getContig();
-            if (ca.strandSwitch == ChimericAlignment_old.StrandSwitch.NO_SWITCH) {
+            if (ca.strandSwitch == ChimericAlignment.StrandSwitch.NO_SWITCH) {
                 leftBreakpointCoord  = leftReferenceInterval.getEnd() - homologyLen;
                 rightBreakpointCoord = rightReferenceInterval.getStart() - 1;
-            } else if (ca.strandSwitch == ChimericAlignment_old.StrandSwitch.FORWARD_TO_REVERSE){
+            } else if (ca.strandSwitch == ChimericAlignment.StrandSwitch.FORWARD_TO_REVERSE){
                 leftBreakpointCoord  = leftReferenceInterval.getEnd() - homologyLen;
                 rightBreakpointCoord = rightReferenceInterval.getEnd();
             } else {

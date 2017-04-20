@@ -7,14 +7,12 @@ import com.esotericsoftware.kryo.io.Output;
 import com.google.common.annotations.VisibleForTesting;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.SAMFlag;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.TextCigarCodec;
 import org.broadinstitute.hellbender.tools.spark.sv.SVConstants;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.SVVariantDiscoveryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.bwa.BwaMemAlignment;
-import org.broadinstitute.hellbender.utils.bwa.BwaMemAlignmentUtils;
 import org.broadinstitute.hellbender.utils.read.CigarUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
@@ -29,30 +27,30 @@ import java.util.Objects;
  * A wrapper around the Alignment returned by the BWA aligner.
  */
 @DefaultSerializer(AlignmentRegion.Serializer.class)
-public class AlignmentRegion {
+class AlignmentRegion {
 
-    public static final String STRING_REP_SEPARATOR= "\t";
-    public static final String PACKED_STRING_REP_SEPARATOR= "_";
-    public static final char ASSEMBLY_CONTIG_SEPARATOR = ':';
-    public static final String DUMMY_ASM_ID = "ASSEMBLY";
+    static final String STRING_REP_SEPARATOR= "\t";
+    static final String PACKED_STRING_REP_SEPARATOR= "_";
+    static final char ASSEMBLY_CONTIG_SEPARATOR = ':';
+    static final String DUMMY_ASM_ID = "ASSEMBLY";
 
-    public final String assemblyId;
-    public final String contigId;
+    final String assemblyId;
+    final String contigId;
 
     // ref alignment info
-    public final SimpleInterval referenceInterval;
-    public final Cigar cigarAlong5to3DirectionOfContig;
-    public final boolean forwardStrand;
-    public final int mapQual;
-    public final int mismatches;
+    final SimpleInterval referenceInterval;
+    final Cigar cigarAlong5to3DirectionOfContig;
+    final boolean forwardStrand;
+    final int mapQual;
+    final int mismatches;
 
     // contig "exact-match" alignment info
-    public final int assembledContigLength;
-    public final int startInAssembledContig;   // 1-based, inclusive
-    public final int endInAssembledContig;     // 1-based, inclusive
+    final int assembledContigLength;
+    final int startInAssembledContig;   // 1-based, inclusive
+    final int endInAssembledContig;     // 1-based, inclusive
 
-    public AlignmentRegion(final String assemblyId, final String contigId, final int contigLen,
-                           final BwaMemAlignment alignment, final List<String> refNames) {
+    AlignmentRegion(final String assemblyId, final String contigId, final int contigLen,
+                    final BwaMemAlignment alignment, final List<String> refNames) {
 
         this.contigId = contigId;
         this.assemblyId = assemblyId;
@@ -74,9 +72,9 @@ public class AlignmentRegion {
     }
 
     @VisibleForTesting
-    public AlignmentRegion(final String assemblyId, final String contigId, final SimpleInterval referenceInterval,
-                           final Cigar cigarAlong5to3DirectionOfContig, final boolean forwardStrand, final int mapQual, final int mismatches,
-                           final int startInAssembledContig, final int endInAssembledContig) {
+    AlignmentRegion(final String assemblyId, final String contigId, final SimpleInterval referenceInterval,
+                    final Cigar cigarAlong5to3DirectionOfContig, final boolean forwardStrand, final int mapQual, final int mismatches,
+                    final int startInAssembledContig, final int endInAssembledContig) {
 
         this.assemblyId = assemblyId;
         this.contigId = contigId;
@@ -90,7 +88,7 @@ public class AlignmentRegion {
         this.endInAssembledContig = endInAssembledContig;
     }
 
-    public AlignmentRegion(final GATKRead read) {
+    AlignmentRegion(final GATKRead read) {
         final String readName = read.getName();
         final int splitPos = readName.indexOf(ASSEMBLY_CONTIG_SEPARATOR);
         if ( splitPos == -1 ) {
@@ -110,7 +108,7 @@ public class AlignmentRegion {
         this.endInAssembledContig = endOfAlignmentInContig();
     }
 
-    public AlignmentRegion(final Kryo kryo, final Input input) {
+    private AlignmentRegion(final Kryo kryo, final Input input) {
         this.assemblyId = input.readString();
         this.contigId = input.readString();
         this.referenceInterval = kryo.readObject(input, SimpleInterval.class);
@@ -124,12 +122,12 @@ public class AlignmentRegion {
     }
 
     @VisibleForTesting
-    public int startOfAlignmentInContig() {
+    int startOfAlignmentInContig() {
         return SVVariantDiscoveryUtils.getNumClippedBases(true, cigarAlong5to3DirectionOfContig) + 1;
     }
 
     @VisibleForTesting
-    public int endOfAlignmentInContig() {
+    int endOfAlignmentInContig() {
         return assembledContigLength - SVVariantDiscoveryUtils.getNumClippedBases(false, cigarAlong5to3DirectionOfContig);
     }
 
@@ -138,7 +136,7 @@ public class AlignmentRegion {
      * @return  A packed String representation of this AlignmentRegion, noticeably the fields are not separated by tab.
      *          Note that the format is NOT the same as that used in {@link #toString()}.
      */
-    public String toPackedString() {
+    String toPackedString() {
         return String.join(PACKED_STRING_REP_SEPARATOR,
                 assemblyId, contigId, String.valueOf(startInAssembledContig), String.valueOf(endInAssembledContig),
                 referenceInterval.getContig(), String.valueOf(referenceInterval.getStart()), (forwardStrand ? "+" : "-"),
@@ -186,7 +184,7 @@ public class AlignmentRegion {
      * mismatches
      */
     @VisibleForTesting
-    public static AlignmentRegion fromString(final String[] fields) {
+    static AlignmentRegion fromString(final String[] fields) {
         final String asmId = fields[0];
         final String contigId = fields[1].replace(">", "").split(" ")[0];
         final String refContig = fields[2];
